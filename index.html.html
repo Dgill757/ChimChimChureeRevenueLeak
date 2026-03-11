@@ -1,0 +1,2927 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Chim-Chim Churee — Operations Suite | Time Leak + Job Estimator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Barlow+Condensed:wght@400;500;600;700;800;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+/* =============================================
+   DESIGN TOKENS
+   ============================================= */
+:root {
+  --black:      #07060A;
+  --dark:       #0D0B10;
+  --card:       #131118;
+  --surf:       #1A1720;
+  --surf2:      #211E28;
+  --bdr:        #2A2630;
+  --bdr-hi:     #3C3748;
+  --gold:       #C8902A;
+  --gold-lt:    #E4B354;
+  --gold-dk:    #8B6018;
+  --gold-glow:  rgba(200,144,42,.10);
+  --gold-dim:   rgba(200,144,42,.14);
+  --gold-ring:  rgba(200,144,42,.22);
+  --cream:      #EDE7D6;
+  --cream-dim:  #958F82;
+  --green:      #52B574;
+  --green-dim:  rgba(82,181,116,.13);
+  --red:        #D06060;
+  --red-dim:    rgba(208,96,96,.12);
+  --blue:       #6BAED6;
+  --blue-dim:   rgba(107,174,214,.12);
+
+  --font-serif:  'Playfair Display', Georgia, serif;
+  --font-cond:   'Barlow Condensed', 'Arial Narrow', sans-serif;
+  --font-body:   'Barlow', system-ui, sans-serif;
+
+  --r:   6px;
+  --r-lg:12px;
+  --sh:  0 2px 20px rgba(0,0,0,.45);
+  --sh-lg: 0 4px 40px rgba(0,0,0,.55);
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px;scroll-behavior:smooth}
+body{
+  font-family:var(--font-body);
+  background:var(--black);
+  color:var(--cream);
+  line-height:1.6;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+body::after{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;
+  opacity:.3;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='.06'/%3E%3C/svg%3E");
+  background-size:300px;
+}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer}
+input,select,textarea{font-family:inherit}
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
+input[type=number]{-moz-appearance:textfield}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bdr-hi);border-radius:2px}
+
+/* =============================================
+   TYPOGRAPHY HELPERS
+   ============================================= */
+.eyebrow{
+  font-family:var(--font-cond);font-size:.68rem;font-weight:700;
+  letter-spacing:.22em;text-transform:uppercase;color:var(--gold);
+}
+.section-title{
+  font-family:var(--font-serif);font-size:clamp(1.8rem,3.5vw,2.6rem);
+  font-weight:900;line-height:1.12;color:var(--cream);
+}
+.panel-title{
+  font-family:var(--font-cond);font-size:.82rem;font-weight:700;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--cream);
+}
+.group-label{
+  font-family:var(--font-cond);font-size:.62rem;font-weight:700;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--gold);
+  padding-bottom:.45rem;border-bottom:1px solid var(--bdr);
+  margin-bottom:.75rem;display:block;
+}
+
+/* =============================================
+   LAYOUT
+   ============================================= */
+.container{max-width:1280px;margin:0 auto;padding:0 1.5rem}
+
+/* =============================================
+   BUTTONS
+   ============================================= */
+.btn{
+  display:inline-flex;align-items:center;gap:.4rem;
+  padding:.5rem 1.2rem;border-radius:var(--r);
+  font-family:var(--font-cond);font-size:.75rem;font-weight:700;
+  letter-spacing:.12em;text-transform:uppercase;
+  border:1px solid transparent;transition:all .18s ease;white-space:nowrap;
+}
+.btn-gold{background:var(--gold);color:var(--black)}
+.btn-gold:hover{background:var(--gold-lt);transform:translateY(-1px);box-shadow:0 4px 14px rgba(200,144,42,.3)}
+.btn-ghost{background:transparent;color:var(--cream-dim);border-color:var(--bdr)}
+.btn-ghost:hover{color:var(--cream);border-color:var(--bdr-hi)}
+.btn-danger{background:transparent;color:var(--red);border-color:rgba(208,96,96,.25)}
+.btn-danger:hover{background:var(--red-dim)}
+.btn-green{background:transparent;color:var(--green);border-color:rgba(82,181,116,.3)}
+.btn-green:hover{background:var(--green-dim)}
+.btn-sm{padding:.32rem .7rem;font-size:.65rem;letter-spacing:.1em}
+.btn-xs{padding:.22rem .5rem;font-size:.6rem;letter-spacing:.1em}
+
+/* =============================================
+   FORM ELEMENTS
+   ============================================= */
+.field{margin-bottom:.65rem}
+.field-label{
+  display:block;font-size:.78rem;color:var(--cream-dim);
+  margin-bottom:.28rem;line-height:1.3;
+}
+.field-input{
+  width:100%;background:var(--surf);border:1px solid var(--bdr);
+  border-radius:var(--r);padding:.5rem .8rem;
+  color:var(--cream);font-family:var(--font-cond);font-size:1rem;font-weight:600;
+  outline:none;transition:border-color .15s,box-shadow .15s;
+}
+.field-input:focus{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold-dim)}
+.field-input::placeholder{color:var(--cream-dim);opacity:.5;font-weight:400}
+.field-select{
+  width:100%;background:var(--surf);border:1px solid var(--bdr);
+  border-radius:var(--r);padding:.5rem .8rem;
+  color:var(--cream);font-family:var(--font-cond);font-size:.95rem;font-weight:600;
+  outline:none;transition:border-color .15s;appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23958F82' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right .8rem center;padding-right:2.2rem;
+}
+.field-select:focus{border-color:var(--gold)}
+.field-textarea{
+  width:100%;background:var(--surf);border:1px solid var(--bdr);
+  border-radius:var(--r);padding:.5rem .8rem;
+  color:var(--cream);font-size:.88rem;outline:none;resize:vertical;
+  transition:border-color .15s;min-height:70px;
+}
+.field-textarea:focus{border-color:var(--gold)}
+.toggle-wrap{display:flex;align-items:center;gap:.55rem;cursor:pointer}
+.toggle{
+  position:relative;width:36px;height:20px;flex-shrink:0;
+}
+.toggle input{position:absolute;opacity:0;width:0;height:0}
+.toggle-slider{
+  position:absolute;inset:0;background:var(--surf2);border:1px solid var(--bdr);
+  border-radius:12px;transition:all .2s;cursor:pointer;
+}
+.toggle input:checked ~ .toggle-slider{background:var(--gold);border-color:var(--gold)}
+.toggle-slider::after{
+  content:'';position:absolute;left:2px;top:2px;
+  width:14px;height:14px;border-radius:50%;
+  background:var(--cream-dim);transition:transform .2s;
+}
+.toggle input:checked ~ .toggle-slider::after{
+  transform:translateX(16px);background:var(--black);
+}
+.toggle-label{font-size:.82rem;color:var(--cream-dim)}
+
+/* =============================================
+   CARDS
+   ============================================= */
+.card{
+  background:var(--card);border:1px solid var(--bdr);
+  border-radius:var(--r-lg);padding:1.5rem;box-shadow:var(--sh);
+}
+.card-head{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:1.2rem;gap:1rem;
+}
+
+/* =============================================
+   TOP NAV
+   ============================================= */
+.top-nav{
+  position:sticky;top:0;z-index:500;
+  background:rgba(7,6,10,.92);
+  backdrop-filter:blur(16px) saturate(180%);
+  border-bottom:1px solid var(--bdr);
+}
+.top-nav-inner{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:1rem;height:60px;
+}
+.nav-brand{display:flex;flex-direction:column;gap:1px;flex-shrink:0}
+.nav-name{
+  font-family:var(--font-cond);font-size:.98rem;font-weight:800;
+  letter-spacing:.06em;text-transform:uppercase;color:var(--cream);white-space:nowrap;
+}
+.nav-tagline{
+  font-family:var(--font-cond);font-size:.6rem;font-weight:600;
+  letter-spacing:.15em;text-transform:uppercase;color:var(--gold);
+}
+.nav-right{display:flex;align-items:center;gap:.6rem}
+.nav-phone{
+  font-family:var(--font-cond);font-size:.88rem;font-weight:700;
+  color:var(--cream-dim);letter-spacing:.04em;transition:color .2s;
+}
+.nav-phone:hover{color:var(--gold-lt)}
+
+/* =============================================
+   TAB SYSTEM
+   ============================================= */
+.tab-bar{
+  background:var(--dark);border-bottom:1px solid var(--bdr);
+  position:sticky;top:60px;z-index:490;
+}
+.tab-bar-inner{
+  display:flex;align-items:stretch;gap:0;
+  overflow-x:auto;
+  scrollbar-width:none;
+}
+.tab-bar-inner::-webkit-scrollbar{display:none}
+.tab-btn{
+  position:relative;display:flex;align-items:center;gap:.55rem;
+  padding:.9rem 2rem;
+  font-family:var(--font-cond);font-size:.82rem;font-weight:700;
+  letter-spacing:.12em;text-transform:uppercase;
+  color:var(--cream-dim);background:none;border:none;
+  cursor:pointer;white-space:nowrap;
+  transition:color .18s;border-bottom:2px solid transparent;
+  margin-bottom:-1px;
+}
+.tab-btn:hover{color:var(--cream)}
+.tab-btn.active{
+  color:var(--gold);
+  border-bottom-color:var(--gold);
+}
+.tab-btn .tab-icon{font-size:1rem;line-height:1}
+.tab-btn .tab-badge{
+  background:var(--gold-dim);border:1px solid var(--gold-ring);
+  border-radius:3px;padding:.1rem .35rem;
+  font-size:.55rem;letter-spacing:.1em;color:var(--gold-lt);
+}
+.tab-content{display:none}
+.tab-content.active{display:block}
+
+/* =============================================
+   TIME LEAK CALCULATOR — preserved styles
+   ============================================= */
+.tl-section{padding:2.5rem 0}
+.tl-head{text-align:center;margin-bottom:3rem}
+.tl-head .section-title{margin:.6rem 0 .7rem}
+.tl-head p{color:var(--cream-dim);font-size:.95rem;max-width:520px;margin:0 auto}
+.tl-layout{display:grid;grid-template-columns:400px 1fr;gap:1.75rem;max-width:1240px;margin:0 auto}
+.tl-input-panel{
+  background:var(--card);border:1px solid var(--bdr);border-radius:var(--r-lg);
+  overflow:hidden;box-shadow:var(--sh);
+  position:sticky;top:112px;max-height:calc(100vh - 130px);
+  display:flex;flex-direction:column;
+}
+.tl-input-head{
+  padding:.95rem 1.4rem;border-bottom:1px solid var(--bdr);background:var(--surf);
+  display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
+}
+.tl-scroll{overflow-y:auto;flex:1;padding:1.25rem}
+.ig-title{
+  font-family:var(--font-cond);font-size:.6rem;font-weight:700;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--gold);
+  padding-bottom:.45rem;border-bottom:1px solid var(--bdr);
+  margin-bottom:.7rem;margin-top:.1rem;display:block;
+}
+.ig-group{margin-bottom:1.4rem}
+.tl-results{display:flex;flex-direction:column;gap:1.25rem}
+.metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:.9rem}
+.metric-card{
+  border-radius:var(--r-lg);padding:1.4rem 1.5rem;box-shadow:var(--sh);
+  transition:transform .2s;
+}
+.metric-card:hover{transform:translateY(-2px)}
+.mc-gold{background:linear-gradient(135deg,#C8902A,#9B6F18);color:var(--black)}
+.mc-dark{background:var(--card);border:1px solid var(--bdr)}
+.mc-green{background:var(--card);border:1px solid var(--bdr)}
+.mc-lbl{
+  font-family:var(--font-cond);font-size:.62rem;font-weight:700;
+  letter-spacing:.18em;text-transform:uppercase;margin-bottom:.45rem;
+}
+.mc-gold .mc-lbl{color:rgba(0,0,0,.6)}
+.mc-dark .mc-lbl,.mc-green .mc-lbl{color:var(--cream-dim)}
+.mc-val{
+  font-family:var(--font-cond);font-size:2.2rem;font-weight:800;line-height:1;
+  transition:all .28s ease;
+}
+.mc-gold .mc-val{color:var(--black)}
+.mc-dark .mc-val{color:var(--gold)}
+.mc-green .mc-val{color:var(--green)}
+.mc-sub{font-size:.7rem;margin-top:.35rem}
+.mc-gold .mc-sub{color:rgba(0,0,0,.5)}
+.mc-dark .mc-sub,.mc-green .mc-sub{color:var(--cream-dim)}
+.annual-panel{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r-lg);padding:1.4rem 1.5rem;box-shadow:var(--sh)}
+.annual-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.1rem;margin-top:.9rem}
+.ag-label{font-size:.72rem;color:var(--cream-dim);margin-bottom:.28rem}
+.ag-val{font-family:var(--font-cond);font-size:1.55rem;font-weight:800;line-height:1}
+.breakdown-panel{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r-lg);padding:1.4rem 1.5rem;box-shadow:var(--sh)}
+.br-row{margin-bottom:.85rem}
+.br-meta{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.28rem}
+.br-name{font-size:.78rem;color:var(--cream-dim)}
+.br-hrs{font-family:var(--font-cond);font-size:.85rem;font-weight:700;color:var(--cream)}
+.br-track{height:5px;background:var(--surf);border-radius:3px;overflow:hidden}
+.br-fill{height:100%;border-radius:3px;background:var(--gold);transition:width .5s cubic-bezier(.4,0,.2,1)}
+.br-fill.admin{background:var(--green)}
+.insight-card{
+  background:linear-gradient(140deg,#1B1408,#100E08,#0C0A0F);
+  border:1px solid rgba(200,144,42,.26);border-radius:var(--r-lg);
+  padding:2.25rem 2.5rem;position:relative;overflow:hidden;
+  box-shadow:0 4px 40px rgba(0,0,0,.5),0 0 40px var(--gold-glow);
+}
+.insight-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--gold),var(--gold-lt),transparent);
+}
+.insight-card::after{
+  content:'';position:absolute;top:-60px;right:-60px;
+  width:350px;height:350px;
+  background:radial-gradient(ellipse,rgba(200,144,42,.09),transparent 65%);
+  pointer-events:none;
+}
+.insight-text{font-size:.96rem;color:var(--cream-dim);line-height:1.82;max-width:820px}
+.insight-text strong{color:var(--gold-lt);font-weight:600}
+.roi-tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:.9rem;margin-top:2rem}
+.roi-tier{
+  background:rgba(255,255,255,.025);border:1px solid var(--bdr);
+  border-radius:var(--r);padding:1.4rem 1.2rem;text-align:center;position:relative;
+}
+.roi-tier.featured{border-color:var(--gold-ring);background:rgba(200,144,42,.05)}
+.tier-tag{
+  position:absolute;top:-10px;left:50%;transform:translateX(-50%);
+  background:var(--gold);color:var(--black);font-family:var(--font-cond);
+  font-size:.58rem;font-weight:800;letter-spacing:.15em;text-transform:uppercase;
+  padding:.16rem .5rem;border-radius:2px;
+}
+.tier-price{font-family:var(--font-cond);font-size:1.55rem;font-weight:800}
+.tier-per{font-size:.7rem;color:var(--cream-dim);margin-bottom:.65rem}
+.tier-roi{font-family:var(--font-cond);font-size:2.1rem;font-weight:800;color:var(--gold);line-height:1}
+.tier-roi-label{font-size:.68rem;color:var(--cream-dim);margin-top:.22rem}
+
+/* =============================================
+   JOB ESTIMATOR
+   ============================================= */
+.est-layout{padding:0}
+.est-hero{
+  background:linear-gradient(135deg,#131118 0%,#1A1520 100%);
+  border-bottom:1px solid var(--bdr);
+  padding:2rem 0 1.5rem;
+  position:relative;overflow:hidden;
+}
+.est-hero::before{
+  content:'';position:absolute;top:-100px;right:-100px;
+  width:600px;height:400px;
+  background:radial-gradient(ellipse,rgba(200,144,42,.06),transparent 65%);
+  pointer-events:none;
+}
+.est-hero-inner{
+  display:grid;grid-template-columns:1fr auto;gap:1.5rem;align-items:center;
+}
+.est-title{
+  font-family:var(--font-serif);font-size:clamp(1.5rem,2.5vw,2rem);
+  font-weight:900;line-height:1.15;margin:.45rem 0 .5rem;
+}
+.est-subtitle{font-size:.88rem;color:var(--cream-dim);line-height:1.6;max-width:540px}
+.est-total-card{
+  background:var(--card);border:1px solid var(--bdr-hi);border-radius:var(--r-lg);
+  padding:1.25rem 1.6rem;text-align:center;min-width:200px;
+  box-shadow:var(--sh);position:relative;overflow:hidden;
+}
+.est-total-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--gold),var(--gold-lt),transparent);
+}
+.est-total-label{
+  font-family:var(--font-cond);font-size:.62rem;font-weight:700;
+  letter-spacing:.18em;text-transform:uppercase;color:var(--cream-dim);margin-bottom:.4rem;
+}
+.est-total-value{
+  font-family:var(--font-cond);font-size:2.4rem;font-weight:800;
+  color:var(--gold);line-height:1;transition:all .3s ease;
+}
+.est-total-sub{font-size:.72rem;color:var(--cream-dim);margin-top:.3rem}
+.est-actions{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.8rem}
+
+/* Est main grid */
+.est-grid{
+  display:grid;grid-template-columns:320px 1fr;
+  gap:0;min-height:calc(100vh - 200px);
+}
+.est-sidebar{
+  background:var(--dark);border-right:1px solid var(--bdr);
+  padding:1.25rem;overflow-y:auto;
+  position:sticky;top:112px;max-height:calc(100vh - 130px);
+}
+.est-main{padding:1.5rem;overflow-y:auto}
+
+/* Accordion */
+.acc-section{
+  background:var(--card);border:1px solid var(--bdr);
+  border-radius:var(--r);margin-bottom:.9rem;overflow:hidden;
+}
+.acc-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:.9rem 1.2rem;cursor:pointer;
+  background:var(--surf);border-bottom:1px solid transparent;
+  transition:background .15s;user-select:none;
+}
+.acc-header:hover{background:var(--surf2)}
+.acc-header.open{border-bottom-color:var(--bdr)}
+.acc-title{
+  font-family:var(--font-cond);font-size:.8rem;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--cream);
+  display:flex;align-items:center;gap:.5rem;
+}
+.acc-title .acc-icon{font-size:.9rem;color:var(--gold)}
+.acc-arrow{
+  font-size:.7rem;color:var(--cream-dim);
+  transition:transform .2s;flex-shrink:0;
+}
+.acc-arrow.open{transform:rotate(180deg)}
+.acc-body{padding:1.2rem;display:none}
+.acc-body.open{display:block}
+
+/* Job type grid */
+.job-type-grid{
+  display:grid;grid-template-columns:repeat(2,1fr);gap:.5rem;
+  margin-bottom:.8rem;
+}
+.job-type-card{
+  background:var(--surf);border:1px solid var(--bdr);border-radius:var(--r);
+  padding:.7rem .85rem;cursor:pointer;
+  transition:all .15s;display:flex;align-items:flex-start;gap:.5rem;
+}
+.job-type-card:hover{border-color:var(--bdr-hi);background:var(--surf2)}
+.job-type-card.selected{border-color:var(--gold);background:var(--gold-dim)}
+.job-type-icon{font-size:1.1rem;flex-shrink:0;margin-top:.05rem}
+.job-type-name{font-family:var(--font-cond);font-size:.75rem;font-weight:700;
+  letter-spacing:.04em;color:var(--cream);line-height:1.25}
+.job-cat-title{
+  font-family:var(--font-cond);font-size:.6rem;font-weight:800;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--gold-lt);
+  margin:.9rem 0 .5rem;padding-bottom:.35rem;border-bottom:1px solid var(--bdr);
+  display:block;
+}
+.job-cat-title:first-child{margin-top:0}
+
+/* Materials table */
+.mat-table{width:100%;border-collapse:collapse}
+.mat-table th{
+  font-family:var(--font-cond);font-size:.6rem;font-weight:700;
+  letter-spacing:.15em;text-transform:uppercase;color:var(--cream-dim);
+  padding:.45rem .65rem;text-align:left;background:var(--surf);
+  border-bottom:1px solid var(--bdr);
+}
+.mat-table td{padding:.4rem .65rem;border-bottom:1px solid var(--bdr);font-size:.84rem;vertical-align:middle}
+.mat-table tr:last-child td{border-bottom:none}
+.mat-table tr:hover td{background:rgba(255,255,255,.02)}
+.mat-cat-row td{
+  background:var(--surf2);padding:.5rem .65rem;
+  font-family:var(--font-cond);font-size:.62rem;font-weight:700;
+  letter-spacing:.15em;text-transform:uppercase;color:var(--gold);
+  border-bottom:1px solid var(--bdr);
+}
+.mat-qty-input{
+  width:70px;background:var(--surf);border:1px solid var(--bdr);
+  border-radius:3px;padding:.3rem .45rem;
+  color:var(--cream);font-family:var(--font-cond);font-size:.88rem;font-weight:600;
+  outline:none;text-align:center;
+}
+.mat-qty-input:focus{border-color:var(--gold)}
+.mat-cost-input{
+  width:80px;background:var(--surf);border:1px solid var(--bdr);
+  border-radius:3px;padding:.3rem .45rem;
+  color:var(--cream);font-family:var(--font-cond);font-size:.88rem;font-weight:600;
+  outline:none;text-align:right;
+}
+.mat-cost-input:focus{border-color:var(--gold)}
+.mat-total{
+  font-family:var(--font-cond);font-size:.9rem;font-weight:700;
+  color:var(--gold-lt);text-align:right;white-space:nowrap;
+}
+.mat-name{color:var(--cream);font-size:.84rem;line-height:1.3}
+.mat-unit{font-size:.72rem;color:var(--cream-dim)}
+.mat-remove{
+  background:none;border:none;color:var(--red);cursor:pointer;
+  font-size:.85rem;padding:.2rem .3rem;opacity:.6;transition:opacity .15s;
+}
+.mat-remove:hover{opacity:1}
+
+/* Estimate Output */
+.est-output{
+  background:linear-gradient(140deg,#1B1408,#0E0C10);
+  border:1px solid var(--gold-ring);border-radius:var(--r-lg);
+  padding:2rem;box-shadow:var(--sh-lg);position:relative;overflow:hidden;
+}
+.est-output::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--gold),var(--gold-lt),transparent);
+}
+.est-output-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:.9rem 0}
+.est-line{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:.5rem 0;border-bottom:1px solid rgba(255,255,255,.05);
+  font-size:.88rem;
+}
+.est-line:last-child{border-bottom:none}
+.est-line-label{color:var(--cream-dim)}
+.est-line-value{
+  font-family:var(--font-cond);font-size:1rem;font-weight:700;color:var(--cream);
+}
+.est-line.total .est-line-label{color:var(--cream);font-weight:600}
+.est-line.total .est-line-value{font-size:1.5rem;color:var(--gold)}
+.est-bands{display:grid;grid-template-columns:repeat(3,1fr);gap:.9rem;margin-top:1.25rem}
+.est-band{
+  background:rgba(255,255,255,.03);border:1px solid var(--bdr);
+  border-radius:var(--r);padding:1.2rem;text-align:center;
+}
+.est-band.target{border-color:var(--gold-ring);background:var(--gold-dim)}
+.band-label{
+  font-family:var(--font-cond);font-size:.6rem;font-weight:700;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--cream-dim);margin-bottom:.4rem;
+}
+.band-value{
+  font-family:var(--font-cond);font-size:1.8rem;font-weight:800;color:var(--cream);line-height:1;
+}
+.est-band.target .band-value{color:var(--gold)}
+.band-sub{font-size:.68rem;color:var(--cream-dim);margin-top:.22rem}
+.margin-indicator{
+  display:flex;align-items:center;gap:.5rem;margin-top:.7rem;
+  background:var(--green-dim);border:1px solid rgba(82,181,116,.2);
+  border-radius:var(--r);padding:.6rem .9rem;
+}
+.mi-label{font-size:.78rem;color:var(--green)}
+.mi-value{font-family:var(--font-cond);font-size:1.1rem;font-weight:800;color:var(--green);margin-left:auto}
+.print-notes{
+  margin-top:1rem;background:var(--surf);border-radius:var(--r);
+  padding:1rem;font-size:.82rem;color:var(--cream-dim);line-height:1.65;
+  font-style:italic;border-left:2px solid var(--gold-dk);
+}
+
+/* Complexity adjusters */
+.complexity-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.5rem}
+.complexity-item{
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--surf);border:1px solid var(--bdr);border-radius:var(--r);
+  padding:.6rem .8rem;cursor:pointer;transition:all .15s;
+}
+.complexity-item:hover{border-color:var(--bdr-hi)}
+.complexity-item.active{border-color:var(--gold);background:var(--gold-dim)}
+.ci-left{display:flex;align-items:center;gap:.5rem}
+.ci-icon{font-size:.95rem}
+.ci-name{font-size:.78rem;color:var(--cream);line-height:1.3}
+.ci-charge{
+  font-family:var(--font-cond);font-size:.82rem;font-weight:700;
+  color:var(--gold-lt);white-space:nowrap;flex-shrink:0;
+}
+.ci-check{
+  width:16px;height:16px;border:1px solid var(--bdr);border-radius:3px;
+  background:var(--surf2);flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:.65rem;color:transparent;
+}
+.complexity-item.active .ci-check{background:var(--gold);border-color:var(--gold);color:var(--black)}
+
+/* Settings panel */
+.settings-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:.65rem}
+.settings-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.65rem}
+.settings-note{
+  font-size:.73rem;color:var(--cream-dim);font-style:italic;
+  margin-top:.5rem;line-height:1.5;
+}
+.save-indicator{
+  display:inline-flex;align-items:center;gap:.4rem;
+  font-family:var(--font-cond);font-size:.65rem;font-weight:700;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--green);
+  opacity:0;transition:opacity .3s;
+}
+.save-indicator.show{opacity:1}
+.save-indicator::before{content:'✓ '}
+
+/* Template cards */
+.template-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.5rem}
+.template-card{
+  background:var(--surf);border:1px solid var(--bdr);border-radius:var(--r);
+  padding:.7rem .9rem;cursor:pointer;transition:all .15s;
+}
+.template-card:hover{border-color:var(--gold-ring);background:var(--surf2)}
+.template-name{
+  font-family:var(--font-cond);font-size:.78rem;font-weight:700;
+  letter-spacing:.05em;color:var(--cream);margin-bottom:.2rem;
+}
+.template-range{font-size:.7rem;color:var(--gold-lt);font-weight:600}
+.template-desc{font-size:.7rem;color:var(--cream-dim);margin-top:.18rem;line-height:1.35}
+
+/* Labor table */
+.labor-grid{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:.5rem;align-items:center;margin-bottom:.5rem}
+.labor-role{font-size:.8rem;color:var(--cream-dim)}
+.labor-cost{
+  font-family:var(--font-cond);font-size:.88rem;font-weight:700;color:var(--gold-lt);
+  text-align:right;
+}
+
+/* Print styles */
+@media print {
+  .top-nav,.tab-bar,.est-sidebar,
+  .acc-section:not(.print-acc),
+  .est-actions,.btn,.reset-btn,
+  .tab-btn:not(.active){ display:none!important }
+  .est-output,.est-output *{color-adjust:exact!important;-webkit-print-color-adjust:exact!important}
+  body{background:white;color:black}
+  .tab-content:not(.active){display:block!important}
+}
+
+/* =============================================
+   RESPONSIVE
+   ============================================= */
+@media(max-width:1100px){
+  .tl-layout,.est-grid{grid-template-columns:1fr}
+  .tl-input-panel{position:static;max-height:none}
+  .est-sidebar{position:static;max-height:none;border-right:none;border-bottom:1px solid var(--bdr)}
+}
+@media(max-width:768px){
+  .metric-grid{grid-template-columns:1fr}
+  .annual-grid{grid-template-columns:1fr}
+  .roi-tiers{grid-template-columns:1fr}
+  .est-hero-inner{grid-template-columns:1fr}
+  .est-total-card{min-width:0}
+  .settings-grid-2,.settings-grid-3{grid-template-columns:1fr}
+  .est-output-grid{grid-template-columns:1fr}
+  .est-bands{grid-template-columns:1fr}
+  .job-type-grid{grid-template-columns:1fr}
+  .complexity-grid{grid-template-columns:1fr}
+  .tab-btn{padding:.9rem 1.2rem}
+  .insight-card{padding:1.75rem 1.5rem}
+}
+@media(max-width:480px){
+  .container{padding:0 1rem}
+  .nav-right .btn:not(.btn-gold){display:none}
+  .labor-grid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ======================================================
+     TOP NAV
+     ====================================================== -->
+<nav class="top-nav">
+  <div class="container">
+    <div class="top-nav-inner">
+      <a href="https://www.chimchimchureemasonry.com" target="_blank" class="nav-brand">
+        <span class="nav-name">Chim&#8209;Chim Churee</span>
+        <span class="nav-tagline">Chimney &amp; Masonry &mdash; Manassas, VA</span>
+      </a>
+      <div class="nav-right">
+        <a href="tel:7033304912" class="nav-phone">(703) 330-4912</a>
+        <a href="https://www.chimchimchureemasonry.com" class="btn btn-gold btn-sm" target="_blank">Free Estimate</a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ======================================================
+     TAB BAR
+     ====================================================== -->
+<div class="tab-bar">
+  <div class="container">
+    <div class="tab-bar-inner">
+      <button class="tab-btn active" onclick="switchTab('timeleak',this)">
+        <span class="tab-icon">⏱</span>
+        Time Leak Calculator
+        <span class="tab-badge">Tab 1</span>
+      </button>
+      <button class="tab-btn" onclick="switchTab('estimator',this)">
+        <span class="tab-icon">🧱</span>
+        Job Estimator
+        <span class="tab-badge">Tab 2</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ======================================================
+     TAB 1: TIME LEAK CALCULATOR
+     ====================================================== -->
+<div class="tab-content active" id="tab-timeleak">
+<div class="tl-section">
+<div class="container">
+
+  <div class="tl-head">
+    <span class="eyebrow">Chim-Chim Churee Chimney &amp; Masonry</span>
+    <h2 class="section-title">Time Leak &amp; Revenue<br>Recovery Calculator</h2>
+    <p>See how much time and revenue your chimney business is losing every month to callbacks, missed calls, admin work, and operational drag.</p>
+  </div>
+
+  <div class="tl-layout">
+
+    <!-- INPUTS -->
+    <div class="tl-input-panel">
+      <div class="tl-input-head">
+        <span class="panel-title">Your Business Inputs</span>
+        <button class="btn btn-ghost btn-xs reset-btn" onclick="tlReset()">Reset</button>
+      </div>
+      <div class="tl-scroll">
+
+        <div class="ig-group">
+          <span class="ig-title">Business Baseline</span>
+          <div class="field">
+            <label class="field-label">Average revenue per completed job ($)</label>
+            <input class="field-input" type="number" id="tl-avgRev" value="650" min="0" step="25" oninput="tlCalc()">
+          </div>
+          <div class="field">
+            <label class="field-label">Owner / operator time value ($/hr)</label>
+            <input class="field-input" type="number" id="tl-ownerRate" value="150" min="0" step="10" oninput="tlCalc()">
+          </div>
+        </div>
+
+        <div class="ig-group">
+          <span class="ig-title">Field Disruptions — Per Month</span>
+          <div class="field">
+            <label class="field-label">Employee call-outs <span style="opacity:.5">(3 hrs lost ea.)</span></label>
+            <input class="field-input" type="number" id="tl-callouts" value="3" min="0" oninput="tlCalc()">
+          </div>
+          <div class="field">
+            <label class="field-label">Late arrivals / no-shows <span style="opacity:.5">(2 hrs lost ea.)</span></label>
+            <input class="field-input" type="number" id="tl-late" value="6" min="0" oninput="tlCalc()">
+          </div>
+          <div class="field">
+            <label class="field-label">Callbacks / return visits <span style="opacity:.5">(4 hrs lost ea.)</span></label>
+            <input class="field-input" type="number" id="tl-callbacks" value="4" min="0" oninput="tlCalc()">
+          </div>
+          <div class="field">
+            <label class="field-label">Truck breakdowns / route disruptions <span style="opacity:.5">(4 hrs ea.)</span></label>
+            <input class="field-input" type="number" id="tl-trucks" value="1" min="0" oninput="tlCalc()">
+          </div>
+        </div>
+
+        <div class="ig-group">
+          <span class="ig-title">People &amp; Training — Per Month</span>
+          <div class="field">
+            <label class="field-label">New hire training hours invested</label>
+            <input class="field-input" type="number" id="tl-training" value="10" min="0" oninput="tlCalc()">
+          </div>
+          <div class="field">
+            <label class="field-label">Sudden quit events <span style="opacity:.5">(6 hrs lost ea.)</span></label>
+            <input class="field-input" type="number" id="tl-quits" value="0.5" min="0" step="0.5" oninput="tlCalc()">
+          </div>
+        </div>
+
+        <div class="ig-group">
+          <span class="ig-title">Customer Issues — Per Month</span>
+          <div class="field">
+            <label class="field-label">Angry customer calls <span style="opacity:.5">(2 hrs ea.)</span></label>
+            <input class="field-input" type="number" id="tl-angry" value="4" min="0" oninput="tlCalc()">
+          </div>
+          <div class="field">
+            <label class="field-label">Major complaints / on-site issues <span style="opacity:.5">(4 hrs ea.)</span></label>
+            <input class="field-input" type="number" id="tl-major" value="2" min="0" oninput="tlCalc()">
+          </div>
+          <div class="field">
+            <label class="field-label">Bad reviews requiring response <span style="opacity:.5">(2 hrs ea.)</span></label>
+            <input class="field-input" type="number" id="tl-reviews" value="1" min="0" oninput="tlCalc()">
+          </div>
+        </div>
+
+        <div class="ig-group">
+          <span class="ig-title">Admin Burden — Per Week</span>
+          <div class="field">
+            <label class="field-label">Hours writing estimates per week</label>
+            <input class="field-input" type="number" id="tl-estHrs" value="8" min="0" step="0.5" oninput="tlCalc()">
+          </div>
+          <div class="field">
+            <label class="field-label">Hours on scheduling &amp; dispatch per week</label>
+            <input class="field-input" type="number" id="tl-schedHrs" value="5" min="0" step="0.5" oninput="tlCalc()">
+          </div>
+          <div class="field">
+            <label class="field-label">Hours on paperwork &amp; invoicing per week</label>
+            <input class="field-input" type="number" id="tl-paperHrs" value="6" min="0" step="0.5" oninput="tlCalc()">
+          </div>
+        </div>
+
+        <div class="ig-group">
+          <span class="ig-title">Missed Revenue — Per Month</span>
+          <div class="field">
+            <label class="field-label">Missed or unreturned calls per month</label>
+            <input class="field-input" type="number" id="tl-missed" value="20" min="0" oninput="tlCalc()">
+          </div>
+          <div class="field">
+            <label class="field-label">Est. close rate if those calls were followed up (0–1)</label>
+            <input class="field-input" type="number" id="tl-closeRate" value="0.35" min="0" max="1" step="0.05" oninput="tlCalc()">
+          </div>
+        </div>
+
+      </div><!-- end tl-scroll -->
+    </div><!-- end input panel -->
+
+    <!-- RESULTS -->
+    <div class="tl-results">
+
+      <div class="metric-grid">
+        <div class="metric-card mc-gold">
+          <div class="mc-lbl">Hours Lost / Month</div>
+          <div class="mc-val" id="tl-r-hours">0</div>
+          <div class="mc-sub">Preventable operational drag</div>
+        </div>
+        <div class="metric-card mc-dark">
+          <div class="mc-lbl">Owner Time Cost / Month</div>
+          <div class="mc-val" id="tl-r-timecost">$0</div>
+          <div class="mc-sub">At your declared hourly rate</div>
+        </div>
+        <div class="metric-card mc-green">
+          <div class="mc-lbl">Recoverable Revenue / Month</div>
+          <div class="mc-val" id="tl-r-recovered">$0</div>
+          <div class="mc-sub">From missed call recovery</div>
+        </div>
+        <div class="metric-card mc-dark">
+          <div class="mc-lbl">Net Monthly Opportunity</div>
+          <div class="mc-val" style="color:var(--gold)" id="tl-r-net">$0</div>
+          <div class="mc-sub">After $997/mo investment benchmark</div>
+        </div>
+      </div>
+
+      <div class="annual-panel">
+        <span class="panel-title">Annual View</span>
+        <div class="annual-grid">
+          <div>
+            <div class="ag-label">Annual Time Cost</div>
+            <div class="ag-val" id="tl-r-annTime">$0</div>
+          </div>
+          <div>
+            <div class="ag-label">Recovered Rev / Year</div>
+            <div class="ag-val" style="color:var(--green)" id="tl-r-annRev">$0</div>
+          </div>
+          <div>
+            <div class="ag-label">ROI at $997/mo</div>
+            <div class="ag-val" style="color:var(--gold)" id="tl-r-roi">0.0x</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="breakdown-panel">
+        <span class="panel-title" style="display:block;margin-bottom:.4rem">Where the Hours Go</span>
+        <div style="font-size:.65rem;color:var(--cream-dim);font-style:italic;margin-bottom:1rem">
+          Gold = operational disruption &nbsp;·&nbsp; Green = admin burden
+        </div>
+        <div id="tl-breakdown"></div>
+      </div>
+
+      <div class="insight-card">
+        <span class="eyebrow" style="position:relative;z-index:1">What This Means</span>
+        <h3 class="section-title" style="font-size:1.7rem;margin:.5rem 0 1rem;position:relative;z-index:1">The Numbers Tell a Clear Story</h3>
+        <p class="insight-text" id="tl-insight-text" style="position:relative;z-index:1">Adjust your inputs to generate your personalized summary.</p>
+        <div class="roi-tiers" style="position:relative;z-index:1">
+          <div class="roi-tier">
+            <div class="tier-price">$497</div>
+            <div class="tier-per">per month</div>
+            <div class="tier-roi" id="tl-roi-497">0.0x</div>
+            <div class="tier-roi-label">ROI Multiple</div>
+          </div>
+          <div class="roi-tier featured">
+            <div class="tier-tag">Benchmark</div>
+            <div class="tier-price">$997</div>
+            <div class="tier-per">per month</div>
+            <div class="tier-roi" id="tl-roi-997">0.0x</div>
+            <div class="tier-roi-label">ROI Multiple</div>
+          </div>
+          <div class="roi-tier">
+            <div class="tier-price">$1,997</div>
+            <div class="tier-per">per month</div>
+            <div class="tier-roi" id="tl-roi-1997">0.0x</div>
+            <div class="tier-roi-label">ROI Multiple</div>
+          </div>
+        </div>
+        <p style="font-size:.7rem;color:var(--cream-dim);font-style:italic;margin-top:.85rem;position:relative;z-index:1">
+          ROI multiples compare estimated annual combined opportunity vs each investment tier annualized. Directional estimates only.
+        </p>
+      </div>
+
+    </div><!-- end tl-results -->
+  </div><!-- end tl-layout -->
+
+</div><!-- end container -->
+</div><!-- end tl-section -->
+</div><!-- end tab-timeleak -->
+
+<!-- ======================================================
+     TAB 2: JOB ESTIMATOR
+     ====================================================== -->
+<div class="tab-content" id="tab-estimator">
+
+  <!-- HERO HEADER -->
+  <div class="est-hero">
+    <div class="container">
+      <div class="est-hero-inner">
+        <div>
+          <span class="eyebrow">Internal Operations Tool</span>
+          <h2 class="est-title">Chimney &amp; Masonry<br>Job Estimator</h2>
+          <p class="est-subtitle">Fast, configurable ballpark estimates for any chimney or masonry job. Set your rates once. Use on every job. Defaults persist in your browser.</p>
+          <div class="est-actions">
+            <button class="btn btn-ghost btn-sm" onclick="estReset()">↺ Reset Estimate</button>
+            <button class="btn btn-green btn-sm" onclick="saveDefaults()">💾 Save Company Defaults</button>
+            <button class="btn btn-ghost btn-sm" onclick="printEstimate()">🖨 Print Summary</button>
+            <button class="btn btn-ghost btn-sm" onclick="copyEstimate()">📋 Copy Summary</button>
+            <span class="save-indicator" id="save-indicator">Saved</span>
+          </div>
+          <p style="font-size:.72rem;color:var(--cream-dim);margin-top:.65rem;font-style:italic">
+            ⚠ Final pricing may vary based on hidden conditions, code requirements, access limitations, exact measurements, and material availability. This is a planning tool only.
+          </p>
+        </div>
+        <div>
+          <div class="est-total-card">
+            <div class="est-total-label">Estimated Selling Price</div>
+            <div class="est-total-value" id="est-grand-total">$0</div>
+            <div class="est-total-sub" id="est-job-label">No job type selected</div>
+            <div style="margin-top:.75rem;display:flex;flex-direction:column;gap:.35rem">
+              <div style="display:flex;justify-content:space-between;font-size:.75rem;padding:.3rem 0;border-bottom:1px solid var(--bdr)">
+                <span style="color:var(--cream-dim)">Gross Margin</span>
+                <span style="font-family:var(--font-cond);font-weight:700;color:var(--green)" id="est-margin-pct">0%</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:.75rem;padding:.3rem 0">
+                <span style="color:var(--cream-dim)">Total Cost</span>
+                <span style="font-family:var(--font-cond);font-weight:700" id="est-cost-display">$0</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN ESTIMATOR BODY -->
+  <div class="est-grid">
+
+    <!-- SIDEBAR: Job Types + Templates -->
+    <div class="est-sidebar">
+      <span class="group-label" style="display:block;margin-bottom:.8rem">Select Job Type</span>
+
+      <span class="job-cat-title">Inspections &amp; Cleanings</span>
+      <div class="job-type-grid">
+        <div class="job-type-card" onclick="selectJob('l1-inspection',this)">
+          <span class="job-type-icon">🔍</span>
+          <span class="job-type-name">Level 1 Inspection</span>
+        </div>
+        <div class="job-type-card" onclick="selectJob('l2-inspection',this)">
+          <span class="job-type-icon">📹</span>
+          <span class="job-type-name">Level 2 Video Inspection</span>
+        </div>
+        <div class="job-type-card" onclick="selectJob('cleaning-l1',this)">
+          <span class="job-type-icon">🧹</span>
+          <span class="job-type-name">Cleaning + L1 Inspection</span>
+        </div>
+        <div class="job-type-card" onclick="selectJob('cleaning-l2',this)">
+          <span class="job-type-icon">🧹</span>
+          <span class="job-type-name">Cleaning + L2 Inspection</span>
+        </div>
+        <div class="job-type-card" onclick="selectJob('woodstove-insert',this)">
+          <span class="job-type-icon">🪵</span>
+          <span class="job-type-name">Wood Stove Insert Clean + Inspect</span>
+        </div>
+        <div class="job-type-card" onclick="selectJob('furnace-flue',this)">
+          <span class="job-type-icon">🌡</span>
+          <span class="job-type-name">Furnace / Boiler Flue Clean + Inspect</span>
+        </div>
+      </div>
+
+      <span class="job-cat-title">Liners &amp; Relining</span>
+      <div class="job-type-grid">
+        <div class="job-type-card" onclick="selectJob('ss-liner',this)">
+          <span class="job-type-icon">🔩</span>
+          <span class="job-type-name">SS Flex Liner Install</span>
+        </div>
+        <div class="job-type-card" onclick="selectJob('gas-liner',this)">
+          <span class="job-type-icon">⛽</span>
+          <span class="job-type-name">Gas Liner Drop</span>
+        </div>
+        <div class="job-type-card" onclick="selectJob('insulated-liner',this)">
+          <span class="job-type-icon">🔩</span>
+          <span class="job-type-name">Insulated Liner Install</span>
+        </div>
+      </div>
+
+      <span class="job-cat-title">Masonry &amp; Repair</span>
+      <div class="job-type-grid">
+        <div class="job-type-card" onclick="selectJob('tuckpointing',this)">
+          <span class="job-type-icon">🧱</span>
+          <span class="job-type-name">Tuckpointing / Repointing</span>
+        </div>
+        <div class="job-type-card" onclick="selectJob('crown-repair',this)">
+          <span class="job-type-icon">👑</span>
+          <span class="job-type-name">Crown Repair</span>
+        </div>
+        <div class="job-type-card" onclick="selectJob('crown-rebuild',this)">
+          <span class="job-type-icon">👑</span>
+          <span class="job-type-name">Crown Rebuild</span>
+        </div>
+        <div class="job-type-card" onclick="selectJob('parging',this)">
+          <span class="job-type-icon">🏗</span>
+          <span class="job-type-name">Smoke Chamber Parging</span>
+        </div>
+        <div class="job-type-card" onclick="selectJob('brick-repair',this)">
+          <span class="job-type-icon">🧱</span>
+          <span class="job-type-name">Brick Replacement / Repair</span>
+        </div>
+        <div class="job-type-card" onclick="selectJob('flashing-repair',this)">
+          <span class="job-type-icon">🏠</span>
+          <span class="job-type-name">Flashing Repair</span>
+        </div>
+        <div class="job-type-card" onclick="selectJob('waterproofing',this)">
+          <span class="job-type-icon">💧</span>
+          <span class="job-type-name">Waterproofing / Sealing</span>
+        </div>
+        <div class="job-type-card" onclick="selectJob('partial-rebuild',this)">
+          <span class="job-type-icon">🏗</span>
+          <span class="job-type-name">Partial Chimney Rebuild</span>
+        </div>
+        <div class="job-type-card" onclick="selectJob('full-rebuild',this)">
+          <span class="job-type-icon">🏗</span>
+          <span class="job-type-name">Full Chimney Rebuild</span>
+        </div>
+        <div class="job-type-card" onclick="selectJob('firebox-repair',this)">
+          <span class="job-type-icon">🔥</span>
+          <span class="job-type-name">Firebox Repair</span>
+        </div>
+      </div>
+
+      <span class="job-cat-title">Chimney Top &amp; Metal</span>
+      <div class="job-type-grid">
+        <div class="job-type-card" onclick="selectJob('cap-replace',this)">
+          <span class="job-type-icon">🎩</span>
+          <span class="job-type-name">Cap Replacement</span>
+        </div>
+        <div class="job-type-card" onclick="selectJob('chase-cover',this)">
+          <span class="job-type-icon">🎩</span>
+          <span class="job-type-name">Chase Cover Replacement</span>
+        </div>
+        <div class="job-type-card" onclick="selectJob('damper-install',this)">
+          <span class="job-type-icon">⚙️</span>
+          <span class="job-type-name">Top-Sealing Damper Install</span>
+        </div>
+      </div>
+
+      <span class="job-cat-title">Gas &amp; Appliance</span>
+      <div class="job-type-grid">
+        <div class="job-type-card" onclick="selectJob('gas-line',this)">
+          <span class="job-type-icon">⛽</span>
+          <span class="job-type-name">Gas Line Installation</span>
+        </div>
+        <div class="job-type-card" onclick="selectJob('gas-insert',this)">
+          <span class="job-type-icon">🔥</span>
+          <span class="job-type-name">Gas Insert / Log Set Install</span>
+        </div>
+        <div class="job-type-card" onclick="selectJob('prefab-repair',this)">
+          <span class="job-type-icon">🔧</span>
+          <span class="job-type-name">Prefab Chimney Repair</span>
+        </div>
+        <div class="job-type-card" onclick="selectJob('wood-stove-install',this)">
+          <span class="job-type-icon">🪵</span>
+          <span class="job-type-name">Wood Stove Installation</span>
+        </div>
+      </div>
+
+      <span class="job-cat-title">Outdoor &amp; Custom</span>
+      <div class="job-type-grid">
+        <div class="job-type-card" onclick="selectJob('outdoor-fireplace',this)">
+          <span class="job-type-icon">🌿</span>
+          <span class="job-type-name">Outdoor Fireplace / Patio</span>
+        </div>
+        <div class="job-type-card" onclick="selectJob('custom',this)">
+          <span class="job-type-icon">✏️</span>
+          <span class="job-type-name">Custom / Line-Item Build</span>
+        </div>
+      </div>
+
+      <!-- QUICK TEMPLATES -->
+      <span class="group-label" style="display:block;margin:1.25rem 0 .7rem">Quick Templates</span>
+      <div class="template-grid">
+        <div class="template-card" onclick="loadTemplate('standard-l1')">
+          <div class="template-name">Standard L1 Inspection</div>
+          <div class="template-range">$99 – $150</div>
+          <div class="template-desc">Prefilled scope + labor defaults</div>
+        </div>
+        <div class="template-card" onclick="loadTemplate('cleaning-l2-std')">
+          <div class="template-name">Cleaning + L2 Video</div>
+          <div class="template-range">$299 – $379</div>
+          <div class="template-desc">Full sweep + camera inspection</div>
+        </div>
+        <div class="template-card" onclick="loadTemplate('liner-2story')">
+          <div class="template-name">2-Story SS Liner Install</div>
+          <div class="template-range">$2,400 – $3,600</div>
+          <div class="template-desc">25ft flex liner, full kit</div>
+        </div>
+        <div class="template-card" onclick="loadTemplate('gas-liner-drop')">
+          <div class="template-name">Gas Liner Drop</div>
+          <div class="template-range">$900 – $1,500</div>
+          <div class="template-desc">Small diameter, gas appliance</div>
+        </div>
+        <div class="template-card" onclick="loadTemplate('crown-rebuild-std')">
+          <div class="template-name">Crown Rebuild</div>
+          <div class="template-range">$850 – $1,600</div>
+          <div class="template-desc">Fiber-reinforced concrete crown</div>
+        </div>
+        <div class="template-card" onclick="loadTemplate('chase-cover-std')">
+          <div class="template-name">Chase Cover Replacement</div>
+          <div class="template-range">$450 – $900</div>
+          <div class="template-desc">Stainless, standard prefab chase</div>
+        </div>
+        <div class="template-card" onclick="loadTemplate('tuckpointing-std')">
+          <div class="template-name">Tuckpointing Job</div>
+          <div class="template-range">$800 – $2,200</div>
+          <div class="template-desc">Avg 1-story chimney repoint</div>
+        </div>
+        <div class="template-card" onclick="loadTemplate('parging-std')">
+          <div class="template-name">Smoke Chamber Parging</div>
+          <div class="template-range">$950 – $1,800</div>
+          <div class="template-desc">Standard parging + prep</div>
+        </div>
+        <div class="template-card" onclick="loadTemplate('gas-line-std')">
+          <div class="template-name">Gas Line Install</div>
+          <div class="template-range">$800 – $2,200</div>
+          <div class="template-desc">25ft CSST, interior run</div>
+        </div>
+        <div class="template-card" onclick="loadTemplate('partial-rebuild-std')">
+          <div class="template-name">Partial Rebuild</div>
+          <div class="template-range">$2,200 – $5,500</div>
+          <div class="template-desc">Above-roofline, 1-flue</div>
+        </div>
+      </div>
+
+    </div><!-- end sidebar -->
+
+    <!-- MAIN CONTENT: Estimate Sections -->
+    <div class="est-main">
+      <!-- No job selected state -->
+      <div id="est-no-job" style="text-align:center;padding:4rem 2rem;color:var(--cream-dim)">
+        <div style="font-size:3rem;margin-bottom:1rem">🧱</div>
+        <div style="font-family:var(--font-cond);font-size:1.1rem;font-weight:700;letter-spacing:.06em;color:var(--cream);margin-bottom:.5rem">Select a Job Type to Begin</div>
+        <p style="font-size:.9rem;max-width:400px;margin:0 auto;line-height:1.65">Choose from the left sidebar or load a template to pre-populate the estimate with realistic defaults.</p>
+      </div>
+
+      <!-- Job selected content (hidden until job selected) -->
+      <div id="est-job-content" style="display:none">
+
+        <!-- SECTION: Company Info + Job Details -->
+        <div class="acc-section">
+          <div class="acc-header open" onclick="toggleAcc(this)">
+            <span class="acc-title"><span class="acc-icon">📋</span>Job Details &amp; Customer Info</span>
+            <span class="acc-arrow open">▼</span>
+          </div>
+          <div class="acc-body open">
+            <div class="settings-grid-3">
+              <div class="field">
+                <label class="field-label">Customer Name</label>
+                <input class="field-input" type="text" id="est-customer" placeholder="e.g. Johnson Residence">
+              </div>
+              <div class="field">
+                <label class="field-label">Address / Location</label>
+                <input class="field-input" type="text" id="est-address" placeholder="Manassas, VA">
+              </div>
+              <div class="field">
+                <label class="field-label">Internal Job Reference</label>
+                <input class="field-input" type="text" id="est-jobref" placeholder="e.g. JOB-2025-001">
+              </div>
+            </div>
+            <div class="settings-grid-3">
+              <div class="field">
+                <label class="field-label">Story Height</label>
+                <select class="field-select" id="est-stories" onchange="estCalc()">
+                  <option value="1">1-Story</option>
+                  <option value="2" selected>2-Story</option>
+                  <option value="3">3-Story+</option>
+                </select>
+              </div>
+              <div class="field">
+                <label class="field-label">Roof Access Difficulty</label>
+                <select class="field-select" id="est-access" onchange="estCalc()">
+                  <option value="easy">Easy / Flat</option>
+                  <option value="moderate" selected>Moderate</option>
+                  <option value="steep">Steep Pitch</option>
+                  <option value="difficult">Difficult / Restricted</option>
+                </select>
+              </div>
+              <div class="field">
+                <label class="field-label">Chimney Type</label>
+                <select class="field-select" id="est-chimtype" onchange="estCalc()">
+                  <option value="masonry" selected>Masonry / Brick</option>
+                  <option value="prefab">Prefabricated / Metal Chase</option>
+                </select>
+              </div>
+            </div>
+            <div class="settings-grid-3">
+              <div class="field">
+                <label class="field-label">Chimney Height Above Roof (ft)</label>
+                <input class="field-input" type="number" id="est-chimHeight" value="8" min="2" max="30" step="1" oninput="estCalc()">
+              </div>
+              <div class="field">
+                <label class="field-label">Number of Flues</label>
+                <input class="field-input" type="number" id="est-flues" value="1" min="1" max="6" oninput="estCalc()">
+              </div>
+              <div class="field">
+                <label class="field-label">Liner Length / Flue Height (ft)</label>
+                <input class="field-input" type="number" id="est-linerLen" value="20" min="5" max="60" step="1" oninput="estCalc()">
+              </div>
+            </div>
+            <div style="display:flex;gap:1.5rem;flex-wrap:wrap;margin-top:.5rem">
+              <label class="toggle-wrap">
+                <span class="toggle"><input type="checkbox" id="est-permit" onchange="estCalc()"><span class="toggle-slider"></span></span>
+                <span class="toggle-label">Permit Required</span>
+              </label>
+              <label class="toggle-wrap">
+                <span class="toggle"><input type="checkbox" id="est-scaffolding" onchange="estCalc()"><span class="toggle-slider"></span></span>
+                <span class="toggle-label">Scaffolding / Lift Required</span>
+              </label>
+              <label class="toggle-wrap">
+                <span class="toggle"><input type="checkbox" id="est-demo" onchange="estCalc()"><span class="toggle-slider"></span></span>
+                <span class="toggle-label">Demo / Tear-Out Needed</span>
+              </label>
+              <label class="toggle-wrap">
+                <span class="toggle"><input type="checkbox" id="est-disposal" onchange="estCalc()"><span class="toggle-slider"></span></span>
+                <span class="toggle-label">Haul-Away / Disposal</span>
+              </label>
+              <label class="toggle-wrap">
+                <span class="toggle"><input type="checkbox" id="est-rush" onchange="estCalc()"><span class="toggle-slider"></span></span>
+                <span class="toggle-label">Emergency / Rush Job</span>
+              </label>
+              <label class="toggle-wrap">
+                <span class="toggle"><input type="checkbox" id="est-promo" onchange="estCalc()"><span class="toggle-slider"></span></span>
+                <span class="toggle-label">Seasonal Promo ($500 Off Qualify)</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION: Company Settings -->
+        <div class="acc-section">
+          <div class="acc-header" onclick="toggleAcc(this)">
+            <span class="acc-title"><span class="acc-icon">⚙️</span>Company Cost Settings <span style="font-size:.65rem;color:var(--green);margin-left:.5rem">(Saved in Browser)</span></span>
+            <span class="acc-arrow">▼</span>
+          </div>
+          <div class="acc-body">
+            <div style="margin-bottom:1rem">
+              <span class="group-label">Labor Rates ($/hr)</span>
+              <div class="settings-grid-3">
+                <div class="field">
+                  <label class="field-label">Lead Technician</label>
+                  <input class="field-input" type="number" id="cs-techRate" value="65" min="0" step="5" oninput="saveDefaults();estCalc()">
+                </div>
+                <div class="field">
+                  <label class="field-label">Helper / Laborer</label>
+                  <input class="field-input" type="number" id="cs-helperRate" value="40" min="0" step="5" oninput="saveDefaults();estCalc()">
+                </div>
+                <div class="field">
+                  <label class="field-label">Mason / Brick Tech</label>
+                  <input class="field-input" type="number" id="cs-masonRate" value="80" min="0" step="5" oninput="saveDefaults();estCalc()">
+                </div>
+                <div class="field">
+                  <label class="field-label">Gas Technician</label>
+                  <input class="field-input" type="number" id="cs-gasRate" value="85" min="0" step="5" oninput="saveDefaults();estCalc()">
+                </div>
+                <div class="field">
+                  <label class="field-label">Payroll Burden %</label>
+                  <input class="field-input" type="number" id="cs-burden" value="28" min="0" max="80" step="1" oninput="saveDefaults();estCalc()">
+                </div>
+                <div class="field">
+                  <label class="field-label">Overtime Multiplier</label>
+                  <input class="field-input" type="number" id="cs-ot" value="1.5" min="1" max="3" step="0.1" oninput="saveDefaults();estCalc()">
+                </div>
+              </div>
+            </div>
+            <div style="margin-bottom:1rem">
+              <span class="group-label">Overhead &amp; Trip Charges</span>
+              <div class="settings-grid-3">
+                <div class="field">
+                  <label class="field-label">Truck Charge / Job ($)</label>
+                  <input class="field-input" type="number" id="cs-truck" value="75" min="0" step="5" oninput="saveDefaults();estCalc()">
+                </div>
+                <div class="field">
+                  <label class="field-label">Fuel Allowance / Job ($)</label>
+                  <input class="field-input" type="number" id="cs-fuel" value="35" min="0" step="5" oninput="saveDefaults();estCalc()">
+                </div>
+                <div class="field">
+                  <label class="field-label">Disposal Fee Default ($)</label>
+                  <input class="field-input" type="number" id="cs-disposal" value="85" min="0" step="5" oninput="saveDefaults();estCalc()">
+                </div>
+                <div class="field">
+                  <label class="field-label">Permit Allowance Default ($)</label>
+                  <input class="field-input" type="number" id="cs-permit" value="150" min="0" step="10" oninput="saveDefaults();estCalc()">
+                </div>
+                <div class="field">
+                  <label class="field-label">Scaffolding / Lift Charge ($)</label>
+                  <input class="field-input" type="number" id="cs-scaffold" value="350" min="0" step="25" oninput="saveDefaults();estCalc()">
+                </div>
+                <div class="field">
+                  <label class="field-label">Rush / Emergency Surcharge ($)</label>
+                  <input class="field-input" type="number" id="cs-rush" value="200" min="0" step="25" oninput="saveDefaults();estCalc()">
+                </div>
+              </div>
+            </div>
+            <div>
+              <span class="group-label">Markup &amp; Margin Settings</span>
+              <div class="settings-grid-3">
+                <div class="field">
+                  <label class="field-label">Target Markup % (on cost)</label>
+                  <input class="field-input" type="number" id="cs-markup" value="45" min="0" max="300" step="1" oninput="saveDefaults();estCalc()">
+                </div>
+                <div class="field">
+                  <label class="field-label">Overhead % (on labor+mat)</label>
+                  <input class="field-input" type="number" id="cs-overhead" value="15" min="0" max="50" step="1" oninput="saveDefaults();estCalc()">
+                </div>
+                <div class="field">
+                  <label class="field-label">Contingency % (buffer)</label>
+                  <input class="field-input" type="number" id="cs-contingency" value="8" min="0" max="30" step="1" oninput="saveDefaults();estCalc()">
+                </div>
+                <div class="field">
+                  <label class="field-label">Sales Tax % (0 if not applicable)</label>
+                  <input class="field-input" type="number" id="cs-tax" value="0" min="0" max="15" step="0.1" oninput="saveDefaults();estCalc()">
+                </div>
+                <div class="field">
+                  <label class="field-label">Misc Consumables % (of materials)</label>
+                  <input class="field-input" type="number" id="cs-consumables" value="6" min="0" max="25" step="1" oninput="saveDefaults();estCalc()">
+                </div>
+                <div class="field">
+                  <label class="field-label">Steep Roof Surcharge ($)</label>
+                  <input class="field-input" type="number" id="cs-steepRoof" value="175" min="0" step="25" oninput="saveDefaults();estCalc()">
+                </div>
+              </div>
+            </div>
+            <p class="settings-note">These defaults are automatically saved in your browser (localStorage). They persist between sessions. Click "Clear Defaults" to reset to factory values. <button class="btn btn-danger btn-xs" style="margin-left:.5rem" onclick="clearDefaults()">Clear Defaults</button></p>
+          </div>
+        </div>
+
+        <!-- SECTION: Scope / Job Inputs -->
+        <div class="acc-section">
+          <div class="acc-header open" onclick="toggleAcc(this)">
+            <span class="acc-title"><span class="acc-icon">📐</span>Scope &amp; Job-Specific Inputs</span>
+            <span class="acc-arrow open">▼</span>
+          </div>
+          <div class="acc-body open" id="est-scope-body">
+            <!-- Dynamically populated per job type -->
+          </div>
+        </div>
+
+        <!-- SECTION: Materials -->
+        <div class="acc-section">
+          <div class="acc-header open" onclick="toggleAcc(this)">
+            <span class="acc-title"><span class="acc-icon">📦</span>Materials &amp; Components</span>
+            <span class="acc-arrow open">▼</span>
+          </div>
+          <div class="acc-body open">
+            <div style="margin-bottom:.9rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem">
+              <span style="font-size:.84rem;color:var(--cream-dim)">Edit quantities and unit costs. Click + to add a custom line item.</span>
+              <button class="btn btn-ghost btn-sm" onclick="addCustomMaterial()">+ Add Custom Item</button>
+            </div>
+            <div style="overflow-x:auto">
+              <table class="mat-table" id="materials-table">
+                <thead>
+                  <tr>
+                    <th style="min-width:200px">Item / Description</th>
+                    <th>Unit</th>
+                    <th style="text-align:center">Qty</th>
+                    <th style="text-align:right">Unit Cost</th>
+                    <th style="text-align:right">Total</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="materials-tbody">
+                  <!-- Dynamic -->
+                </tbody>
+              </table>
+            </div>
+            <div style="display:flex;justify-content:flex-end;margin-top:.75rem;gap:.5rem;align-items:center">
+              <span style="font-size:.82rem;color:var(--cream-dim)">Materials Subtotal:</span>
+              <span style="font-family:var(--font-cond);font-size:1.1rem;font-weight:800;color:var(--gold)" id="mat-subtotal">$0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION: Labor -->
+        <div class="acc-section">
+          <div class="acc-header open" onclick="toggleAcc(this)">
+            <span class="acc-title"><span class="acc-icon">👷</span>Labor Calculator</span>
+            <span class="acc-arrow open">▼</span>
+          </div>
+          <div class="acc-body open">
+            <div style="overflow-x:auto">
+              <table style="width:100%;border-collapse:collapse">
+                <thead>
+                  <tr style="background:var(--surf);border-bottom:1px solid var(--bdr)">
+                    <th style="font-family:var(--font-cond);font-size:.6rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--cream-dim);padding:.45rem .65rem;text-align:left">Role</th>
+                    <th style="font-family:var(--font-cond);font-size:.6rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--cream-dim);padding:.45rem .65rem;text-align:center">Hours</th>
+                    <th style="font-family:var(--font-cond);font-size:.6rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--cream-dim);padding:.45rem .65rem;text-align:right">Rate/hr</th>
+                    <th style="font-family:var(--font-cond);font-size:.6rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--cream-dim);padding:.45rem .65rem;text-align:right">Burdened Cost</th>
+                  </tr>
+                </thead>
+                <tbody id="labor-tbody">
+                  <!-- Dynamic rows -->
+                </tbody>
+              </table>
+            </div>
+            <div style="margin-top:.9rem;padding-top:.9rem;border-top:1px solid var(--bdr)">
+              <div class="settings-grid-3">
+                <div class="field">
+                  <label class="field-label">Lead Tech Hours</label>
+                  <input class="field-input" type="number" id="lab-tech" value="4" min="0" step="0.5" oninput="updateLaborRow('tech');estCalc()">
+                </div>
+                <div class="field">
+                  <label class="field-label">Helper Hours</label>
+                  <input class="field-input" type="number" id="lab-helper" value="2" min="0" step="0.5" oninput="updateLaborRow('helper');estCalc()">
+                </div>
+                <div class="field">
+                  <label class="field-label">Mason Hours</label>
+                  <input class="field-input" type="number" id="lab-mason" value="0" min="0" step="0.5" oninput="updateLaborRow('mason');estCalc()">
+                </div>
+                <div class="field">
+                  <label class="field-label">Gas Tech Hours</label>
+                  <input class="field-input" type="number" id="lab-gas" value="0" min="0" step="0.5" oninput="updateLaborRow('gas');estCalc()">
+                </div>
+                <div class="field">
+                  <label class="field-label">Setup / Cleanup Hours</label>
+                  <input class="field-input" type="number" id="lab-setup" value="1" min="0" step="0.5" oninput="updateLaborRow('setup');estCalc()">
+                </div>
+                <div class="field">
+                  <label class="field-label">Drive / Mobilization Hours</label>
+                  <input class="field-input" type="number" id="lab-drive" value="0.5" min="0" step="0.25" oninput="updateLaborRow('drive');estCalc()">
+                </div>
+              </div>
+            </div>
+            <div style="display:flex;justify-content:flex-end;margin-top:.75rem;gap:.5rem;align-items:center">
+              <span style="font-size:.82rem;color:var(--cream-dim)">Labor Subtotal (burdened):</span>
+              <span style="font-family:var(--font-cond);font-size:1.1rem;font-weight:800;color:var(--gold)" id="lab-subtotal">$0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION: Complexity Adjusters -->
+        <div class="acc-section">
+          <div class="acc-header" onclick="toggleAcc(this)">
+            <span class="acc-title"><span class="acc-icon">⚡</span>Access &amp; Complexity Adjusters</span>
+            <span class="acc-arrow">▼</span>
+          </div>
+          <div class="acc-body">
+            <p style="font-size:.82rem;color:var(--cream-dim);margin-bottom:.85rem">Click any applicable item to add it to the estimate. Charges are configurable in Company Settings.</p>
+            <div class="complexity-grid" id="complexity-grid">
+              <!-- Dynamic -->
+            </div>
+            <div style="display:flex;justify-content:flex-end;margin-top:.75rem;gap:.5rem;align-items:center">
+              <span style="font-size:.82rem;color:var(--cream-dim)">Complexity Adjusters Total:</span>
+              <span style="font-family:var(--font-cond);font-size:1.1rem;font-weight:800;color:var(--gold)" id="complexity-subtotal">$0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION: Estimate Output -->
+        <div class="acc-section print-acc" id="est-output-section">
+          <div class="acc-header open" onclick="toggleAcc(this)">
+            <span class="acc-title"><span class="acc-icon">💰</span>Estimate Summary &amp; Output</span>
+            <span class="acc-arrow open">▼</span>
+          </div>
+          <div class="acc-body open">
+            <div class="est-output" id="est-output-card">
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:.75rem">
+                <div>
+                  <div class="eyebrow" style="margin-bottom:.3rem">Chim-Chim Churee Chimney &amp; Masonry</div>
+                  <h3 style="font-family:var(--font-serif);font-size:1.4rem;font-weight:900;position:relative;z-index:1" id="out-job-title">Estimate</h3>
+                  <div style="font-size:.8rem;color:var(--cream-dim);margin-top:.25rem" id="out-job-meta"></div>
+                </div>
+                <div style="text-align:right;position:relative;z-index:1">
+                  <div style="font-size:.7rem;color:var(--cream-dim)">Estimate Date</div>
+                  <div style="font-family:var(--font-cond);font-weight:700;font-size:.95rem" id="out-date"></div>
+                </div>
+              </div>
+
+              <div class="est-output-grid" style="position:relative;z-index:1">
+                <div>
+                  <div class="est-line">
+                    <span class="est-line-label">Materials &amp; Components</span>
+                    <span class="est-line-value" id="out-materials">$0</span>
+                  </div>
+                  <div class="est-line">
+                    <span class="est-line-label">Consumables / Misc</span>
+                    <span class="est-line-value" id="out-consumables">$0</span>
+                  </div>
+                  <div class="est-line">
+                    <span class="est-line-label">Labor (burdened)</span>
+                    <span class="est-line-value" id="out-labor">$0</span>
+                  </div>
+                </div>
+                <div>
+                  <div class="est-line">
+                    <span class="est-line-label">Truck / Fuel / Overhead</span>
+                    <span class="est-line-value" id="out-overhead">$0</span>
+                  </div>
+                  <div class="est-line">
+                    <span class="est-line-label">Permit / Disposal / Access</span>
+                    <span class="est-line-value" id="out-misc">$0</span>
+                  </div>
+                  <div class="est-line">
+                    <span class="est-line-label">Contingency Buffer</span>
+                    <span class="est-line-value" id="out-contingency">$0</span>
+                  </div>
+                </div>
+              </div>
+
+              <div style="border-top:1px solid var(--bdr-hi);padding-top:.75rem;margin-top:.25rem;position:relative;z-index:1">
+                <div class="est-line">
+                  <span class="est-line-label">Total Direct Cost</span>
+                  <span class="est-line-value" id="out-direct-cost">$0</span>
+                </div>
+                <div class="est-line">
+                  <span class="est-line-label">Markup (<span id="out-markup-pct-label">45</span>% on cost)</span>
+                  <span class="est-line-value" id="out-markup-amount">$0</span>
+                </div>
+                <div class="est-line total">
+                  <span class="est-line-label" style="font-size:1rem;font-weight:700">Estimated Selling Price</span>
+                  <span class="est-line-value" id="out-selling-price">$0</span>
+                </div>
+              </div>
+
+              <div class="margin-indicator" style="position:relative;z-index:1">
+                <span class="mi-label">Estimated Gross Margin</span>
+                <span class="mi-value" id="out-margin">0%</span>
+              </div>
+
+              <div class="est-bands" style="position:relative;z-index:1">
+                <div class="est-band">
+                  <div class="band-label">Low Estimate</div>
+                  <div class="band-value" id="out-low">$0</div>
+                  <div class="band-sub">–15% of target</div>
+                </div>
+                <div class="est-band target">
+                  <div class="band-label">Target Estimate</div>
+                  <div class="band-value" id="out-target">$0</div>
+                  <div class="band-sub">Recommended bid</div>
+                </div>
+                <div class="est-band">
+                  <div class="band-label">Premium Estimate</div>
+                  <div class="band-value" id="out-premium">$0</div>
+                  <div class="band-sub">+20% for complexity</div>
+                </div>
+              </div>
+
+              <div style="margin-top:1.25rem;position:relative;z-index:1">
+                <div class="field">
+                  <label class="field-label">Scope Notes / Assumptions</label>
+                  <textarea class="field-textarea" id="est-notes" placeholder="Add any notes about scope, assumptions, or conditions that affect this estimate..."></textarea>
+                </div>
+              </div>
+
+              <div class="print-notes" style="position:relative;z-index:1">
+                <strong>Disclaimer:</strong> This is an internal planning estimate only. Final pricing may vary based on hidden conditions, code requirements, access limitations, exact measurements, material availability, and field findings. A formal written proposal should be issued before work begins. &mdash; Chim-Chim Churee Chimney &amp; Masonry | (703) 330-4912 | info@chimchimchureemasonry.com | Manassas Park, VA 20111
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- end est-job-content -->
+    </div><!-- end est-main -->
+  </div><!-- end est-grid -->
+</div><!-- end tab-estimator -->
+
+<!-- =============================================
+     JAVASCRIPT
+     ============================================= -->
+<script>
+/* =============================================================
+   UTILITIES
+   ============================================================= */
+const $ = id => document.getElementById(id);
+const gv = id => { const v = parseFloat($(id)?.value); return isFinite(v) ? v : 0; };
+const money = n => new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(n||0);
+const fNum = (n,d=1) => new Intl.NumberFormat('en-US',{maximumFractionDigits:d}).format(n||0);
+const WK2MO = 4.33;
+
+/* =============================================================
+   TAB SYSTEM
+   ============================================================= */
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  $('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'estimator') estCalc();
+}
+
+/* =============================================================
+   ACCORDION
+   ============================================================= */
+function toggleAcc(header) {
+  header.classList.toggle('open');
+  const arrow = header.querySelector('.acc-arrow');
+  const body = header.nextElementSibling;
+  arrow.classList.toggle('open');
+  body.classList.toggle('open');
+}
+
+/* =============================================================
+   TIME LEAK CALCULATOR — LOGIC
+   ============================================================= */
+const TL_DEFAULTS = {
+  avgRev:650, ownerRate:150,
+  callouts:3, late:6, callbacks:4, trucks:1,
+  training:10, quits:0.5,
+  angry:4, major:2, reviews:1,
+  estHrs:8, schedHrs:5, paperHrs:6,
+  missed:20, closeRate:0.35
+};
+
+function tlReset() {
+  Object.entries(TL_DEFAULTS).forEach(([k,v]) => {
+    const el = $('tl-' + k);
+    if (el) el.value = v;
+  });
+  tlCalc();
+}
+
+function tlCalc() {
+  const r = gv('tl-avgRev'), rate = gv('tl-ownerRate');
+  const cats = [
+    { l:'Employee Call-Outs',   h:gv('tl-callouts')*3,   a:false },
+    { l:'Late Arrivals',        h:gv('tl-late')*2,        a:false },
+    { l:'Callbacks',            h:gv('tl-callbacks')*4,   a:false },
+    { l:'Truck Breakdowns',     h:gv('tl-trucks')*4,      a:false },
+    { l:'Technician Training',  h:gv('tl-training'),      a:false },
+    { l:'Sudden Quits',         h:gv('tl-quits')*6,       a:false },
+    { l:'Angry Customers',      h:gv('tl-angry')*2,       a:false },
+    { l:'Major Complaints',     h:gv('tl-major')*4,       a:false },
+    { l:'Review Cleanup',       h:gv('tl-reviews')*2,     a:false },
+    { l:'Estimate Writing',     h:gv('tl-estHrs')*WK2MO,  a:true  },
+    { l:'Scheduling / Dispatch',h:gv('tl-schedHrs')*WK2MO,a:true  },
+    { l:'Paperwork / Invoicing',h:gv('tl-paperHrs')*WK2MO,a:true  },
+  ];
+  const totalHrs = cats.reduce((s,c)=>s+c.h,0);
+  const timeCostMo = totalHrs * rate;
+  const rCalls = gv('tl-missed') * gv('tl-closeRate');
+  const rRevMo = rCalls * r;
+  const combined = timeCostMo + rRevMo;
+  const combinedYr = combined * 12;
+  const netMo = combined - 997;
+
+  // Update result cards
+  setTl('tl-r-hours',    fNum(totalHrs));
+  setTl('tl-r-timecost', money(timeCostMo));
+  setTl('tl-r-recovered',money(rRevMo));
+  setTl('tl-r-net',      money(netMo));
+  setTl('tl-r-annTime',  money(timeCostMo*12));
+  setTl('tl-r-annRev',   money(rRevMo*12));
+  setTl('tl-r-roi',      fNum(combinedYr/(997*12))+'x');
+  setTl('tl-roi-497',    fNum(combinedYr/(497*12))+'x');
+  setTl('tl-roi-997',    fNum(combinedYr/(997*12))+'x');
+  setTl('tl-roi-1997',   fNum(combinedYr/(1997*12))+'x');
+
+  // Insight text
+  const ins = $('tl-insight-text');
+  if (ins) ins.innerHTML = `Based on your inputs, this business may be losing approximately <strong>${fNum(totalHrs)} hours per month</strong> to preventable admin work, operational chaos, and missed opportunities. At an owner time value of <strong>${money(rate)}/hr</strong>, that is roughly <strong>${money(timeCostMo)}</strong> in monthly time cost — before counting a single dollar of missed-call revenue. If <strong>${fNum(rCalls,1)} missed calls</strong> per month were recovered, that adds another <strong>${money(rRevMo)}</strong> in potential monthly revenue. Combined monthly opportunity: <strong>${money(combined)}</strong>. Annualized: <strong>${money(combinedYr)}</strong>.`;
+
+  // Breakdown bars
+  const sorted = [...cats].sort((a,b)=>b.h-a.h);
+  const maxH = Math.max(...cats.map(c=>c.h),1);
+  const bd = $('tl-breakdown');
+  if (bd) bd.innerHTML = sorted.map(c=>`
+    <div class="br-row">
+      <div class="br-meta">
+        <span class="br-name">${c.l}</span>
+        <span class="br-hrs">${fNum(c.h)} hrs</span>
+      </div>
+      <div class="br-track">
+        <div class="br-fill${c.a?' admin':''}" style="width:${Math.min((c.h/maxH)*100,100).toFixed(1)}%"></div>
+      </div>
+    </div>`).join('');
+}
+
+function setTl(id, val) {
+  const el = $(id);
+  if (el && el.textContent !== val) el.textContent = val;
+}
+
+/* =============================================================
+   JOB ESTIMATOR — COMPANY SETTINGS PERSISTENCE
+   ============================================================= */
+const CS_FIELDS = ['cs-techRate','cs-helperRate','cs-masonRate','cs-gasRate',
+  'cs-burden','cs-ot','cs-truck','cs-fuel','cs-disposal','cs-permit',
+  'cs-scaffold','cs-rush','cs-markup','cs-overhead','cs-contingency',
+  'cs-tax','cs-consumables','cs-steepRoof'];
+
+function saveDefaults() {
+  const data = {};
+  CS_FIELDS.forEach(f => {
+    const el = $(f);
+    if (el) data[f] = el.value;
+  });
+  try { localStorage.setItem('ccc_company_settings', JSON.stringify(data)); } catch(e){}
+  const ind = $('save-indicator');
+  if (ind) { ind.classList.add('show'); setTimeout(()=>ind.classList.remove('show'),2000); }
+}
+
+function loadDefaults() {
+  try {
+    const raw = localStorage.getItem('ccc_company_settings');
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    CS_FIELDS.forEach(f => {
+      const el = $(f);
+      if (el && data[f] !== undefined) el.value = data[f];
+    });
+  } catch(e) {}
+}
+
+function clearDefaults() {
+  if (!confirm('Clear all saved company defaults and reset to factory values?')) return;
+  try { localStorage.removeItem('ccc_company_settings'); } catch(e){}
+  // Reset to factory
+  $('cs-techRate').value=65; $('cs-helperRate').value=40;
+  $('cs-masonRate').value=80; $('cs-gasRate').value=85;
+  $('cs-burden').value=28; $('cs-ot').value=1.5;
+  $('cs-truck').value=75; $('cs-fuel').value=35;
+  $('cs-disposal').value=85; $('cs-permit').value=150;
+  $('cs-scaffold').value=350; $('cs-rush').value=200;
+  $('cs-markup').value=45; $('cs-overhead').value=15;
+  $('cs-contingency').value=8; $('cs-tax').value=0;
+  $('cs-consumables').value=6; $('cs-steepRoof').value=175;
+  estCalc();
+}
+
+/* =============================================================
+   JOB ESTIMATOR — MATERIALS CATALOG
+   ============================================================= */
+// Materials data: { id, cat, name, unit, cost, qty }
+let materialsData = [];
+let materialRowId = 0;
+
+const MATERIAL_CATALOG = {
+  'liner': [
+    { name:'SS Flex Liner 5" (gas)',    unit:'lin ft', cost:14  },
+    { name:'SS Flex Liner 6"',          unit:'lin ft', cost:18  },
+    { name:'SS Flex Liner 7"',          unit:'lin ft', cost:22  },
+    { name:'SS Flex Liner 8"',          unit:'lin ft', cost:28  },
+    { name:'Insulation Wrap (per ft)',  unit:'lin ft', cost:11  },
+    { name:'Tee Connector',             unit:'ea',     cost:95  },
+    { name:'Appliance Connector / Boot',unit:'ea',     cost:70  },
+    { name:'Top Plate',                 unit:'ea',     cost:80  },
+    { name:'SS Rain Cap',               unit:'ea',     cost:60  },
+    { name:'Storm Collar',              unit:'ea',     cost:28  },
+    { name:'Liner Fastener / Band Kit', unit:'kit',    cost:38  },
+    { name:'High-Temp Liner Sealant',   unit:'tube',   cost:18  },
+    { name:'Direct Vent Insert Kit',    unit:'kit',    cost:729 },
+    { name:'Rigid Liner Section 2ft',   unit:'ea',     cost:58  },
+    { name:'Elbow 45°',                 unit:'ea',     cost:45  },
+    { name:'Clean-Out Tee w/ Door',     unit:'ea',     cost:85  },
+  ],
+  'masonry': [
+    { name:'Common Brick',              unit:'ea',     cost:2.50},
+    { name:'Face Brick (standard)',     unit:'ea',     cost:3.50},
+    { name:'Specialty Matching Brick',  unit:'ea',     cost:8.00},
+    { name:'Firebrick (refractory)',    unit:'ea',     cost:4.50},
+    { name:'Type S Mortar 60lb',        unit:'bag',    cost:12  },
+    { name:'Type N Mortar 60lb',        unit:'bag',    cost:11  },
+    { name:'Refractory Mortar (fireclay)',unit:'50lb', cost:28  },
+    { name:'Portland Cement 94lb',      unit:'bag',    cost:18  },
+    { name:'Masonry Sand (per 50lb)',   unit:'bag',    cost:7   },
+    { name:'Concrete Mix 80lb',         unit:'bag',    cost:9   },
+    { name:'Fiber-Reinforced Crown Mix',unit:'50lb',   cost:35  },
+    { name:'Parging / Chamber Repair Mix',unit:'gal',  cost:55  },
+    { name:'Chimney Crown Sealant',     unit:'gal',    cost:48  },
+    { name:'Waterproofing Agent (ChimneySaver)',unit:'gal',cost:72},
+    { name:'Masonry Caulk / Sealant',   unit:'tube',   cost:12  },
+    { name:'Flashing Metal Sheet',      unit:'sq ft',  cost:4   },
+    { name:'Step Flashing Kit',         unit:'kit',    cost:65  },
+    { name:'Counter Flashing',          unit:'lin ft', cost:14  },
+    { name:'Expansion Joint Sealant',   unit:'tube',   cost:16  },
+    { name:'Gravel / Aggregate (cu yd)',unit:'cu yd',  cost:55  },
+  ],
+  'metal': [
+    { name:'Single-Flue SS Cap',        unit:'ea',     cost:85  },
+    { name:'Multi-Flue SS Cap',         unit:'ea',     cost:185 },
+    { name:'Galvanized Chase Cover (std)',unit:'ea',   cost:175 },
+    { name:'Stainless Chase Cover (std)',unit:'ea',    cost:325 },
+    { name:'Copper Chase Cover',        unit:'ea',     cost:550 },
+    { name:'Top-Sealing Damper',        unit:'ea',     cost:165 },
+    { name:'Spark Arrestor Screen',     unit:'ea',     cost:55  },
+    { name:'Anchor / Bracket Hardware', unit:'set',    cost:28  },
+  ],
+  'gas': [
+    { name:'CSST Gas Line',             unit:'lin ft', cost:5.50},
+    { name:'Black Iron Pipe (per ft)',  unit:'lin ft', cost:4   },
+    { name:'Gas Shutoff Valve (ball)',  unit:'ea',     cost:28  },
+    { name:'Sediment Trap Kit',         unit:'ea',     cost:18  },
+    { name:'Flex Gas Connector',        unit:'ea',     cost:22  },
+    { name:'Appliance Adapter Fitting', unit:'ea',     cost:14  },
+    { name:'Termination / Vent Kit',    unit:'kit',    cost:95  },
+    { name:'Wall Thimble',              unit:'ea',     cost:45  },
+    { name:'Gas Line Sealant / Thread Tape',unit:'roll',cost:8 },
+  ],
+  'consumables': [
+    { name:'High-Temp Silicone Caulk',  unit:'tube',   cost:14  },
+    { name:'Sheet Metal Screws (box)',  unit:'box',    cost:12  },
+    { name:'Masonry Anchors (box)',     unit:'box',    cost:18  },
+    { name:'Tarp / Interior Protection',unit:'set',    cost:22  },
+    { name:'PPE Allowance',             unit:'job',    cost:15  },
+    { name:'Drill Bits / Blades Allow.',unit:'job',    cost:25  },
+    { name:'Photo / Report Allowance',  unit:'job',    cost:10  },
+  ]
+};
+
+function renderMaterialsTable() {
+  const tbody = $('materials-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  let total = 0;
+  let currentCat = '';
+  materialsData.forEach(m => {
+    if (m.qty <= 0) { /* still render */ }
+    const lineTotal = (m.qty || 0) * (m.cost || 0);
+    total += lineTotal;
+    if (m.cat !== currentCat) {
+      const catNames = {
+        liner:'Liner / Venting Materials',masonry:'Masonry Materials',
+        metal:'Metal / Top Components',gas:'Gas / Appliance Materials',
+        consumables:'Consumables / Misc',custom:'Custom Items'
+      };
+      currentCat = m.cat;
+      tbody.innerHTML += `<tr class="mat-cat-row"><td colspan="6">${catNames[m.cat]||m.cat}</td></tr>`;
+    }
+    tbody.innerHTML += `
+      <tr id="mat-row-${m.id}">
+        <td>
+          <div class="mat-name">${m.name}</div>
+        </td>
+        <td><span class="mat-unit">${m.unit}</span></td>
+        <td style="text-align:center">
+          <input class="mat-qty-input" type="number" value="${m.qty}" min="0" step="${m.unit==='lin ft'?'1':'1'}"
+            onchange="updateMat(${m.id},'qty',this.value);estCalc()" />
+        </td>
+        <td style="text-align:right">
+          <input class="mat-cost-input" type="number" value="${m.cost}" min="0" step="0.50"
+            onchange="updateMat(${m.id},'cost',this.value);estCalc()" />
+        </td>
+        <td class="mat-total">$${lineTotal.toFixed(0)}</td>
+        <td style="text-align:center">
+          <button class="mat-remove" onclick="removeMat(${m.id})" title="Remove">✕</button>
+        </td>
+      </tr>`;
+  });
+  $('mat-subtotal').textContent = money(total);
+  return total;
+}
+
+function updateMat(id, field, val) {
+  const m = materialsData.find(x=>x.id===id);
+  if (m) {
+    m[field] = parseFloat(val) || 0;
+    // Update just that row total
+    const row = $('mat-row-'+id);
+    if (row) {
+      const totalCell = row.querySelector('.mat-total');
+      if (totalCell) totalCell.textContent = '$'+(m.qty*m.cost).toFixed(0);
+    }
+    // Recalc subtotal
+    const tot = materialsData.reduce((s,x)=>s+(x.qty*x.cost),0);
+    $('mat-subtotal').textContent = money(tot);
+  }
+}
+
+function removeMat(id) {
+  materialsData = materialsData.filter(x=>x.id!==id);
+  renderMaterialsTable();
+  estCalc();
+}
+
+function addCustomMaterial() {
+  const name = prompt('Material / item description:','Custom Item');
+  if (!name) return;
+  const unit = prompt('Unit (ea, lin ft, bag, kit, job...):','ea');
+  const cost = parseFloat(prompt('Unit cost ($):','0')) || 0;
+  materialsData.push({ id:++materialRowId, cat:'custom', name, unit:unit||'ea', cost, qty:1 });
+  renderMaterialsTable();
+  estCalc();
+}
+
+function addMaterials(items) {
+  items.forEach(m => {
+    materialsData.push({ id:++materialRowId, cat:m.cat, name:m.name, unit:m.unit, cost:m.cost, qty:m.qty||0 });
+  });
+}
+
+/* =============================================================
+   COMPLEXITY ADJUSTERS
+   ============================================================= */
+const COMPLEXITY_ITEMS = [
+  { id:'2story',   name:'2-Story Access',           charge:75,  icon:'🏠' },
+  { id:'3story',   name:'3-Story+ Access',           charge:175, icon:'🏢' },
+  { id:'steep',    name:'Steep Pitch Roof',          charge:'cs-steepRoof', icon:'📐' },
+  { id:'difficult',name:'Difficult / Restricted Access',charge:125, icon:'⚠️' },
+  { id:'multiflue',name:'Multi-Flue Complexity',    charge:150, icon:'🔄' },
+  { id:'brickmath',name:'Specialty Brick Matching', charge:200, icon:'🔍' },
+  { id:'historic', name:'Historic / Specialty Care',charge:250, icon:'🏛' },
+  { id:'interior', name:'Interior Protection Setup',charge:85,  icon:'🛡' },
+  { id:'scaffold', name:'Scaffolding / Lift',       charge:'cs-scaffold', icon:'🏗' },
+  { id:'permit',   name:'Permit + Inspection Admin',charge:'cs-permit', icon:'📄' },
+  { id:'disposal2',name:'Haul-Away / Disposal',     charge:'cs-disposal', icon:'🗑' },
+  { id:'rush2',    name:'Emergency / Rush',         charge:'cs-rush', icon:'⚡' },
+];
+
+let activeComplexity = new Set();
+
+function renderComplexityGrid() {
+  const g = $('complexity-grid');
+  if (!g) return;
+  g.innerHTML = COMPLEXITY_ITEMS.map(c => {
+    const charge = typeof c.charge === 'string' ? gv(c.charge) : c.charge;
+    const isActive = activeComplexity.has(c.id);
+    return `
+      <div class="complexity-item${isActive?' active':''}" onclick="toggleComplexity('${c.id}',this)">
+        <div class="ci-left">
+          <span class="ci-icon">${c.icon}</span>
+          <span class="ci-name">${c.name}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:.4rem">
+          <span class="ci-charge">+$${Math.round(charge)}</span>
+          <span class="ci-check">${isActive?'✓':''}</span>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function toggleComplexity(id, el) {
+  if (activeComplexity.has(id)) activeComplexity.delete(id);
+  else activeComplexity.add(id);
+  el.classList.toggle('active');
+  const check = el.querySelector('.ci-check');
+  if (check) check.textContent = activeComplexity.has(id) ? '✓' : '';
+  estCalc();
+}
+
+function getComplexityTotal() {
+  let total = 0;
+  COMPLEXITY_ITEMS.forEach(c => {
+    if (activeComplexity.has(c.id)) {
+      total += typeof c.charge === 'string' ? gv(c.charge) : c.charge;
+    }
+  });
+  return total;
+}
+
+/* =============================================================
+   LABOR ROWS
+   ============================================================= */
+const LABOR_ROLES = [
+  { id:'tech',   label:'Lead Technician',  rateKey:'cs-techRate'   },
+  { id:'helper', label:'Helper / Laborer', rateKey:'cs-helperRate' },
+  { id:'mason',  label:'Mason',            rateKey:'cs-masonRate'  },
+  { id:'gas',    label:'Gas Technician',   rateKey:'cs-gasRate'    },
+  { id:'setup',  label:'Setup / Cleanup',  rateKey:'cs-techRate'   },
+  { id:'drive',  label:'Drive / Mob.',     rateKey:'cs-techRate'   },
+];
+
+function updateLaborRow(roleId) {
+  // Just trigger recalc - labor table is rebuilt in renderLaborTable
+  renderLaborTable();
+}
+
+function renderLaborTable() {
+  const tbody = $('labor-tbody');
+  if (!tbody) return;
+  const burden = 1 + (gv('cs-burden') / 100);
+  let total = 0;
+  tbody.innerHTML = LABOR_ROLES.map(r => {
+    const hrs = gv('lab-' + r.id);
+    const rate = gv(r.rateKey);
+    const cost = hrs * rate * burden;
+    total += cost;
+    return `
+      <tr style="border-bottom:1px solid var(--bdr)">
+        <td style="padding:.4rem .65rem;font-size:.84rem;color:var(--cream-dim)">${r.label}</td>
+        <td style="padding:.4rem .65rem;font-size:.88rem;text-align:center;font-family:var(--font-cond);font-weight:600">${hrs}</td>
+        <td style="padding:.4rem .65rem;font-size:.82rem;text-align:right;color:var(--cream-dim)">$${rate}/hr</td>
+        <td style="padding:.4rem .65rem;font-family:var(--font-cond);font-size:.9rem;font-weight:700;color:var(--gold-lt);text-align:right">${money(cost)}</td>
+      </tr>`;
+  }).join('');
+  $('lab-subtotal').textContent = money(total);
+  return total;
+}
+
+/* =============================================================
+   JOB TYPE SELECTOR
+   ============================================================= */
+let currentJobType = null;
+
+function selectJob(type, cardEl) {
+  currentJobType = type;
+  document.querySelectorAll('.job-type-card').forEach(c => c.classList.remove('selected'));
+  if (cardEl) cardEl.classList.add('selected');
+
+  $('est-no-job').style.display = 'none';
+  $('est-job-content').style.display = 'block';
+
+  const labels = {
+    'l1-inspection':'Level 1 Visual Inspection',
+    'l2-inspection':'Level 2 Video Inspection',
+    'cleaning-l1':'Fireplace Cleaning + L1 Inspection',
+    'cleaning-l2':'Fireplace Cleaning + L2 Inspection',
+    'woodstove-insert':'Wood Stove Insert Cleaning + Inspection',
+    'furnace-flue':'Furnace / Boiler Flue Cleaning + Inspection',
+    'ss-liner':'Stainless Steel Flex Liner Installation',
+    'gas-liner':'Gas Liner Drop',
+    'insulated-liner':'Insulated SS Liner Installation',
+    'tuckpointing':'Tuckpointing / Repointing',
+    'crown-repair':'Chimney Crown Repair',
+    'crown-rebuild':'Chimney Crown Rebuild',
+    'parging':'Smoke Chamber Parging',
+    'brick-repair':'Brick Replacement / Masonry Repair',
+    'flashing-repair':'Flashing Repair',
+    'waterproofing':'Waterproofing / Chimney Sealing',
+    'partial-rebuild':'Partial Chimney Rebuild',
+    'full-rebuild':'Full Chimney Rebuild',
+    'firebox-repair':'Firebox Repair / Rebuild',
+    'cap-replace':'Chimney Cap Replacement',
+    'chase-cover':'Chase Cover Replacement',
+    'damper-install':'Top-Sealing Damper Installation',
+    'gas-line':'Gas Line Installation',
+    'gas-insert':'Gas Insert / Log Set Installation',
+    'prefab-repair':'Prefabricated Chimney Repair',
+    'wood-stove-install':'Wood Stove Installation',
+    'outdoor-fireplace':'Outdoor Fireplace / Patio Estimate',
+    'custom':'Custom Line-Item Estimate',
+  };
+
+  const label = labels[type] || type;
+  $('est-job-label').textContent = label;
+  $('out-job-title').textContent = label + ' — Estimate';
+  $('out-date').textContent = new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+
+  // Load scope inputs and default materials for this job type
+  loadJobScope(type);
+  loadJobMaterials(type);
+  loadJobLabor(type);
+  renderComplexityGrid();
+  estCalc();
+}
+
+/* =============================================================
+   JOB SCOPE INPUTS (dynamic per type)
+   ============================================================= */
+function loadJobScope(type) {
+  const body = $('est-scope-body');
+  if (!body) return;
+
+  let html = '';
+  const scopeConfigs = {
+    'l1-inspection': `
+      <div class="settings-grid-3">
+        <div class="field"><label class="field-label">Number of Fireplaces / Appliances</label>
+          <input class="field-input" type="number" value="1" min="1" max="8" id="sc-units" oninput="estCalc()"></div>
+        <div class="field"><label class="field-label">Inspection Report Required</label>
+          <select class="field-select" id="sc-report" onchange="estCalc()">
+            <option value="standard" selected>Standard Digital Report</option>
+            <option value="detailed">Detailed Written Report</option>
+          </select></div>
+      </div>
+      <p style="font-size:.78rem;color:var(--cream-dim);font-style:italic">Known pricing: $99 / appliance for Level 1 visual inspection. Estimate reflects cost-plus logic for internal validation.</p>`,
+
+    'l2-inspection': `
+      <div class="settings-grid-3">
+        <div class="field"><label class="field-label">Number of Flues to Camera</label>
+          <input class="field-input" type="number" value="1" min="1" max="6" id="sc-units" oninput="estCalc()"></div>
+        <div class="field"><label class="field-label">Video Report Format</label>
+          <select class="field-select" id="sc-report" onchange="estCalc()">
+            <option value="digital" selected>Digital / Email Report</option>
+            <option value="dvd">DVD / Physical Copy</option>
+          </select></div>
+      </div>
+      <p style="font-size:.78rem;color:var(--cream-dim);font-style:italic">Known pricing: $249 for L2 video, $319 for cleaning + L2. Camera equipment depreciation included in overhead.</p>`,
+
+    'cleaning-l1': `
+      <div class="settings-grid-3">
+        <div class="field"><label class="field-label">Appliance Type</label>
+          <select class="field-select" id="sc-apptype" onchange="estCalc()">
+            <option value="fireplace" selected>Wood Fireplace</option>
+            <option value="woodstove">Wood Stove</option>
+            <option value="gas">Gas Fireplace / Insert</option>
+            <option value="furnace">Furnace / Boiler Flue</option>
+          </select></div>
+        <div class="field"><label class="field-label">Estimated Creosote Level</label>
+          <select class="field-select" id="sc-creosote" onchange="estCalc()">
+            <option value="light">Light (Degree 1)</option>
+            <option value="moderate" selected>Moderate (Degree 2)</option>
+            <option value="heavy">Heavy (Degree 3)</option>
+          </select></div>
+        <div class="field"><label class="field-label">Number of Units</label>
+          <input class="field-input" type="number" value="1" min="1" max="6" id="sc-units" oninput="estCalc()"></div>
+      </div>`,
+
+    'cleaning-l2': `
+      <div class="settings-grid-3">
+        <div class="field"><label class="field-label">Appliance Type</label>
+          <select class="field-select" id="sc-apptype" onchange="estCalc()">
+            <option value="fireplace" selected>Wood Fireplace</option>
+            <option value="woodstove">Wood Stove</option>
+          </select></div>
+        <div class="field"><label class="field-label">Creosote Level</label>
+          <select class="field-select" id="sc-creosote" onchange="estCalc()">
+            <option value="light">Light</option>
+            <option value="moderate" selected>Moderate</option>
+            <option value="heavy">Heavy / Degree 3</option>
+          </select></div>
+      </div>`,
+
+    'ss-liner': `
+      <div class="settings-grid-3">
+        <div class="field"><label class="field-label">Liner Length (ft)</label>
+          <input class="field-input" type="number" value="25" min="8" max="60" id="sc-linerLen" oninput="estCalc()"></div>
+        <div class="field"><label class="field-label">Liner Diameter</label>
+          <select class="field-select" id="sc-diameter" onchange="estCalc()">
+            <option value="5">5" (gas appliances)</option>
+            <option value="6" selected>6" (standard)</option>
+            <option value="7">7" (larger fireplace)</option>
+            <option value="8">8" (large masonry)</option>
+          </select></div>
+        <div class="field"><label class="field-label">Liner Grade</label>
+          <select class="field-select" id="sc-grade" onchange="estCalc()">
+            <option value="304">304 SS (wood burning)</option>
+            <option value="316" selected>316Ti SS (all fuel — recommended)</option>
+          </select></div>
+        <div class="field"><label class="field-label">Insulation Required</label>
+          <select class="field-select" id="sc-insulation" onchange="estCalc()">
+            <option value="no">No Insulation</option>
+            <option value="wrap" selected>Insulation Wrap</option>
+            <option value="pour">Pour-In Vermiculite</option>
+          </select></div>
+        <div class="field"><label class="field-label">Number of Appliance Connections</label>
+          <input class="field-input" type="number" value="1" min="1" max="4" id="sc-connections" oninput="estCalc()"></div>
+        <div class="field"><label class="field-label">Existing Clay Liner</label>
+          <select class="field-select" id="sc-existing" onchange="estCalc()">
+            <option value="none">No Existing Liner</option>
+            <option value="leave" selected>Leave Clay in Place</option>
+            <option value="remove">Remove Clay Liner (+labor)</option>
+          </select></div>
+      </div>`,
+
+    'gas-liner': `
+      <div class="settings-grid-3">
+        <div class="field"><label class="field-label">Liner Length (ft)</label>
+          <input class="field-input" type="number" value="20" min="8" max="50" id="sc-linerLen" oninput="estCalc()"></div>
+        <div class="field"><label class="field-label">Diameter</label>
+          <select class="field-select" id="sc-diameter" onchange="estCalc()">
+            <option value="4">4" (small gas appliance)</option>
+            <option value="5" selected>5" (standard gas)</option>
+            <option value="6">6" (larger gas)</option>
+          </select></div>
+        <div class="field"><label class="field-label">Appliance Type</label>
+          <select class="field-select" id="sc-apptype" onchange="estCalc()">
+            <option value="insert" selected>Gas Insert / Fireplace</option>
+            <option value="furnace">Furnace / Boiler</option>
+            <option value="logset">Gas Log Set</option>
+          </select></div>
+      </div>`,
+
+    'tuckpointing': `
+      <div class="settings-grid-3">
+        <div class="field"><label class="field-label">Linear Feet of Joints to Repoint</label>
+          <input class="field-input" type="number" value="80" min="10" max="500" id="sc-linFt" oninput="estCalc()"></div>
+        <div class="field"><label class="field-label">Mortar Type</label>
+          <select class="field-select" id="sc-mortarType" onchange="estCalc()">
+            <option value="N">Type N (standard)</option>
+            <option value="S" selected>Type S (exterior/chimney)</option>
+          </select></div>
+        <div class="field"><label class="field-label">Joint Depth Condition</label>
+          <select class="field-select" id="sc-jointCond" onchange="estCalc()">
+            <option value="shallow">Shallow (&lt;½")</option>
+            <option value="standard" selected>Standard (½"–¾")</option>
+            <option value="deep">Deep (&gt;¾" — more labor)</option>
+          </select></div>
+      </div>`,
+
+    'crown-repair': `
+      <div class="settings-grid-3">
+        <div class="field"><label class="field-label">Crown Damage Level</label>
+          <select class="field-select" id="sc-crownDmg" onchange="estCalc()">
+            <option value="minor">Minor Cracks — Sealant Only</option>
+            <option value="moderate" selected>Moderate — Patch + Sealant</option>
+            <option value="major">Major — Partial Pour Required</option>
+          </select></div>
+        <div class="field"><label class="field-label">Crown Size (sq ft estimate)</label>
+          <input class="field-input" type="number" value="4" min="1" max="20" id="sc-crownSqft" oninput="estCalc()"></div>
+      </div>`,
+
+    'crown-rebuild': `
+      <div class="settings-grid-3">
+        <div class="field"><label class="field-label">Crown Size (sq ft)</label>
+          <input class="field-input" type="number" value="5" min="2" max="25" id="sc-crownSqft" oninput="estCalc()"></div>
+        <div class="field"><label class="field-label">Number of Flues in Crown</label>
+          <input class="field-input" type="number" value="1" min="1" max="4" id="sc-fluesInCrown" oninput="estCalc()"></div>
+        <div class="field"><label class="field-label">Crown Material</label>
+          <select class="field-select" id="sc-crownMat" onchange="estCalc()">
+            <option value="fiber" selected>Fiber-Reinforced Concrete</option>
+            <option value="standard">Standard Mortar Mix</option>
+          </select></div>
+      </div>`,
+
+    'parging': `
+      <div class="settings-grid-3">
+        <div class="field"><label class="field-label">Smoke Chamber Area (sq ft est.)</label>
+          <input class="field-input" type="number" value="20" min="8" max="60" id="sc-pargSqft" oninput="estCalc()"></div>
+        <div class="field"><label class="field-label">Smoke Chamber Condition</label>
+          <select class="field-select" id="sc-chamberCond" onchange="estCalc()">
+            <option value="fair">Fair — Light Parging</option>
+            <option value="poor" selected>Poor — Full Reparging</option>
+            <option value="failing">Failing — Full Rebuild Required</option>
+          </select></div>
+      </div>`,
+
+    'brick-repair': `
+      <div class="settings-grid-3">
+        <div class="field"><label class="field-label">Number of Bricks to Replace</label>
+          <input class="field-input" type="number" value="25" min="1" max="500" id="sc-brickCount" oninput="estCalc()"></div>
+        <div class="field"><label class="field-label">Brick Matching Difficulty</label>
+          <select class="field-select" id="sc-brickMatch" onchange="estCalc()">
+            <option value="standard">Standard / Common Match</option>
+            <option value="moderate" selected>Moderate Match Required</option>
+            <option value="specialty">Specialty / Historic Match</option>
+          </select></div>
+        <div class="field"><label class="field-label">Also Repoint Surrounding Area</label>
+          <select class="field-select" id="sc-repoint" onchange="estCalc()">
+            <option value="no">No Additional Repointing</option>
+            <option value="yes" selected>Yes — Blend / Touch Up Joints</option>
+          </select></div>
+      </div>`,
+
+    'flashing-repair': `
+      <div class="settings-grid-3">
+        <div class="field"><label class="field-label">Flashing Linear Feet</label>
+          <input class="field-input" type="number" value="20" min="4" max="80" id="sc-flashFt" oninput="estCalc()"></div>
+        <div class="field"><label class="field-label">Damage Extent</label>
+          <select class="field-select" id="sc-flashCond" onchange="estCalc()">
+            <option value="seal">Sealant Repair Only</option>
+            <option value="step" selected>Step Flashing Replacement</option>
+            <option value="full">Full Flashing System Replacement</option>
+          </select></div>
+      </div>`,
+
+    'waterproofing': `
+      <div class="settings-grid-3">
+        <div class="field"><label class="field-label">Chimney Surface Area (sq ft)</label>
+          <input class="field-input" type="number" value="120" min="20" max="600" id="sc-wpSqft" oninput="estCalc()"></div>
+        <div class="field"><label class="field-label">Product Grade</label>
+          <select class="field-select" id="sc-wpGrade" onchange="estCalc()">
+            <option value="standard">Standard Sealant</option>
+            <option value="chimneysaver" selected>ChimneySaver (vapor-permeable)</option>
+          </select></div>
+        <div class="field"><label class="field-label">Prep / Surface Cleaning Needed</label>
+          <select class="field-select" id="sc-wpPrep" onchange="estCalc()">
+            <option value="none">Minimal Prep</option>
+            <option value="standard" selected>Standard Prep / Rinse</option>
+            <option value="heavy">Heavy Prep / Cleaning</option>
+          </select></div>
+      </div>`,
+
+    'chase-cover': `
+      <div class="settings-grid-3">
+        <div class="field"><label class="field-label">Chase Cover Material</label>
+          <select class="field-select" id="sc-coverMat" onchange="estCalc()">
+            <option value="galvanized">Galvanized Steel</option>
+            <option value="stainless" selected>Stainless Steel (recommended)</option>
+            <option value="copper">Copper (premium)</option>
+          </select></div>
+        <div class="field"><label class="field-label">Chase Width (inches)</label>
+          <input class="field-input" type="number" value="16" min="10" max="48" id="sc-chaseW" oninput="estCalc()"></div>
+        <div class="field"><label class="field-label">Chase Depth (inches)</label>
+          <input class="field-input" type="number" value="16" min="10" max="48" id="sc-chaseD" oninput="estCalc()"></div>
+        <div class="field"><label class="field-label">Number of Flue Openings</label>
+          <input class="field-input" type="number" value="1" min="1" max="4" id="sc-chaseFlueCt" oninput="estCalc()"></div>
+      </div>`,
+
+    'cap-replace': `
+      <div class="settings-grid-3">
+        <div class="field"><label class="field-label">Cap Type</label>
+          <select class="field-select" id="sc-capType" onchange="estCalc()">
+            <option value="single" selected>Single-Flue SS Cap</option>
+            <option value="multi">Multi-Flue / Universal</option>
+            <option value="top-seal">Top-Sealing Damper Cap</option>
+          </select></div>
+        <div class="field"><label class="field-label">Number of Caps</label>
+          <input class="field-input" type="number" value="1" min="1" max="6" id="sc-capCount" oninput="estCalc()"></div>
+      </div>`,
+
+    'damper-install': `
+      <div class="settings-grid-3">
+        <div class="field"><label class="field-label">Flue Size</label>
+          <select class="field-select" id="sc-flueSize" onchange="estCalc()">
+            <option value="8x8">8x8"</option>
+            <option value="8x12" selected>8x12"</option>
+            <option value="12x12">12x12"</option>
+            <option value="12x16">12x16"+</option>
+          </select></div>
+        <div class="field"><label class="field-label">Existing Damper Removal</label>
+          <select class="field-select" id="sc-damperRemoval" onchange="estCalc()">
+            <option value="no">No Removal Needed</option>
+            <option value="yes" selected>Remove Existing Damper</option>
+          </select></div>
+      </div>`,
+
+    'gas-line': `
+      <div class="settings-grid-3">
+        <div class="field"><label class="field-label">Gas Line Length (ft)</label>
+          <input class="field-input" type="number" value="25" min="5" max="150" id="sc-gasLineFt" oninput="estCalc()"></div>
+        <div class="field"><label class="field-label">Gas Type</label>
+          <select class="field-select" id="sc-gasType" onchange="estCalc()">
+            <option value="natural" selected>Natural Gas</option>
+            <option value="propane">Propane</option>
+          </select></div>
+        <div class="field"><label class="field-label">Pipe Material</label>
+          <select class="field-select" id="sc-gasmat" onchange="estCalc()">
+            <option value="csst" selected>CSST (corrugated stainless)</option>
+            <option value="black-iron">Black Iron Pipe</option>
+          </select></div>
+        <div class="field"><label class="field-label">Number of Penetrations</label>
+          <input class="field-input" type="number" value="2" min="0" max="10" id="sc-penetrations" oninput="estCalc()"></div>
+        <div class="field"><label class="field-label">Appliance Connection Needed</label>
+          <select class="field-select" id="sc-gasConn" onchange="estCalc()">
+            <option value="no">No — Stub-Out Only</option>
+            <option value="yes" selected>Yes — Full Connection</option>
+          </select></div>
+      </div>`,
+
+    'gas-insert': `
+      <div class="settings-grid-3">
+        <div class="field"><label class="field-label">Insert Type</label>
+          <select class="field-select" id="sc-insertType" onchange="estCalc()">
+            <option value="gas-insert" selected>Gas Fireplace Insert</option>
+            <option value="log-set">Gas Log Set</option>
+            <option value="direct-vent">Direct Vent Insert</option>
+          </select></div>
+        <div class="field"><label class="field-label">Vent Liner Required</label>
+          <select class="field-select" id="sc-ventLiner" onchange="estCalc()">
+            <option value="no">No Liner Needed</option>
+            <option value="yes" selected>Yes — Liner Included</option>
+          </select></div>
+        <div class="field"><label class="field-label">Liner Length (ft)</label>
+          <input class="field-input" type="number" value="20" min="0" max="50" id="sc-linerLen" oninput="estCalc()"></div>
+      </div>`,
+
+    'partial-rebuild': `
+      <div class="settings-grid-3">
+        <div class="field"><label class="field-label">Rows of Brick to Rebuild (above roofline)</label>
+          <input class="field-input" type="number" value="12" min="3" max="50" id="sc-rebuildRows" oninput="estCalc()"></div>
+        <div class="field"><label class="field-label">Chimney Width (brick courses wide)</label>
+          <input class="field-input" type="number" value="3" min="2" max="8" id="sc-rebuildWidth" oninput="estCalc()"></div>
+        <div class="field"><label class="field-label">Include New Crown</label>
+          <select class="field-select" id="sc-newCrown" onchange="estCalc()">
+            <option value="yes" selected>Yes — New Crown</option>
+            <option value="no">No Crown in Scope</option>
+          </select></div>
+        <div class="field"><label class="field-label">Include New Cap</label>
+          <select class="field-select" id="sc-newCap" onchange="estCalc()">
+            <option value="yes" selected>Yes — New SS Cap</option>
+            <option value="no">No Cap in Scope</option>
+          </select></div>
+      </div>`,
+
+    'full-rebuild': `
+      <div class="settings-grid-3">
+        <div class="field"><label class="field-label">Chimney Height (ft)</label>
+          <input class="field-input" type="number" value="20" min="8" max="60" id="sc-fullHeight" oninput="estCalc()"></div>
+        <div class="field"><label class="field-label">Chimney Footprint (sq ft)</label>
+          <input class="field-input" type="number" value="12" min="4" max="40" id="sc-fullSqft" oninput="estCalc()"></div>
+        <div class="field"><label class="field-label">Number of Flues</label>
+          <input class="field-input" type="number" value="1" min="1" max="4" id="sc-fullFlues" oninput="estCalc()"></div>
+        <div class="field"><label class="field-label">Include Liner</label>
+          <select class="field-select" id="sc-inclLiner" onchange="estCalc()">
+            <option value="yes" selected>Yes — SS Liner Included</option>
+            <option value="no">No Liner in Scope</option>
+          </select></div>
+        <div class="field"><label class="field-label">Foundation Work Needed</label>
+          <select class="field-select" id="sc-foundation" onchange="estCalc()">
+            <option value="no" selected>No Foundation Work</option>
+            <option value="minor">Minor Repair</option>
+            <option value="major">Major Foundation Work</option>
+          </select></div>
+      </div>`,
+
+    'prefab-repair': `
+      <div class="settings-grid-3">
+        <div class="field"><label class="field-label">Repair Scope</label>
+          <select class="field-select" id="sc-prefabScope" onchange="estCalc()">
+            <option value="panels">Refractory Panels Only</option>
+            <option value="chase-cover" selected>Chase Cover + Cap</option>
+            <option value="liner-panels">Liner + Panels</option>
+            <option value="full">Full System Replacement</option>
+          </select></div>
+      </div>`,
+
+    'wood-stove-install': `
+      <div class="settings-grid-3">
+        <div class="field"><label class="field-label">Stove Type</label>
+          <select class="field-select" id="sc-stoveType" onchange="estCalc()">
+            <option value="freestanding" selected>Free-Standing Wood Stove</option>
+            <option value="insert">Wood Stove Insert</option>
+          </select></div>
+        <div class="field"><label class="field-label">Flue / Liner Install Included</label>
+          <select class="field-select" id="sc-stoveLiner" onchange="estCalc()">
+            <option value="yes" selected>Yes — Liner Required</option>
+            <option value="no">No Liner in Scope</option>
+          </select></div>
+        <div class="field"><label class="field-label">Hearth Pad Required</label>
+          <select class="field-select" id="sc-hearthPad" onchange="estCalc()">
+            <option value="no" selected>Existing Hearth OK</option>
+            <option value="yes">New Hearth Pad Required</option>
+          </select></div>
+      </div>`,
+
+    'outdoor-fireplace': `
+      <div class="settings-grid-3">
+        <div class="field"><label class="field-label">Project Type</label>
+          <select class="field-select" id="sc-outdoorType" onchange="estCalc()">
+            <option value="basic" selected>Basic Outdoor Fireplace</option>
+            <option value="patio">Patio Fireplace + Masonry</option>
+            <option value="full-outdoor">Full Outdoor Living Structure</option>
+          </select></div>
+        <div class="field"><label class="field-label">Masonry Area (sq ft)</label>
+          <input class="field-input" type="number" value="60" min="10" max="300" id="sc-outdoorSqft" oninput="estCalc()"></div>
+      </div>
+      <p style="font-size:.78rem;color:var(--cream-dim);font-style:italic;margin-top:.5rem">Outdoor fireplace estimates vary significantly. This is a rough ballpark — a full site visit and detailed proposal is required.</p>`,
+
+    'custom': `
+      <div style="background:var(--surf);border-radius:var(--r);padding:1rem;margin-bottom:.75rem">
+        <p style="font-size:.85rem;color:var(--cream-dim);line-height:1.65">
+          You are building a fully custom estimate. Use the Materials section to add all line items and the Labor section to enter all role-based hours. The estimate output will automatically calculate your totals, markup, and margin.
+        </p>
+      </div>`,
+  };
+
+  // Default scope for types not explicitly defined
+  const defaultScope = `
+    <div style="background:var(--surf);border-radius:var(--r);padding:1rem">
+      <p style="font-size:.85rem;color:var(--cream-dim)">Add your scope details in the fields above and customize materials and labor below.</p>
+    </div>`;
+
+  body.innerHTML = scopeConfigs[type] || defaultScope;
+}
+
+/* =============================================================
+   DEFAULT MATERIALS & LABOR PER JOB TYPE
+   ============================================================= */
+function loadJobMaterials(type) {
+  materialsData = [];
+  materialRowId = 0;
+
+  const mc = MATERIAL_CATALOG;
+
+  const jobMats = {
+    'l1-inspection': [],
+    'l2-inspection': [],
+    'cleaning-l1': [
+      { cat:'consumables', name:'PPE Allowance',            unit:'job',  cost:15, qty:1 },
+      { cat:'consumables', name:'Tarp / Interior Protection',unit:'set', cost:22, qty:1 },
+      { cat:'consumables', name:'Photo / Report Allowance',  unit:'job', cost:10, qty:1 },
+    ],
+    'cleaning-l2': [
+      { cat:'consumables', name:'PPE Allowance',             unit:'job', cost:15, qty:1 },
+      { cat:'consumables', name:'Tarp / Interior Protection',unit:'set', cost:22, qty:1 },
+    ],
+    'ss-liner': [
+      { cat:'liner', name:'SS Flex Liner 6"',            unit:'lin ft', cost:18, qty:25 },
+      { cat:'liner', name:'Insulation Wrap (per ft)',    unit:'lin ft', cost:11, qty:25 },
+      { cat:'liner', name:'Tee Connector',               unit:'ea',     cost:95, qty:1  },
+      { cat:'liner', name:'Appliance Connector / Boot',  unit:'ea',     cost:70, qty:1  },
+      { cat:'liner', name:'Top Plate',                   unit:'ea',     cost:80, qty:1  },
+      { cat:'liner', name:'SS Rain Cap',                 unit:'ea',     cost:60, qty:1  },
+      { cat:'liner', name:'Storm Collar',                unit:'ea',     cost:28, qty:1  },
+      { cat:'liner', name:'Liner Fastener / Band Kit',   unit:'kit',    cost:38, qty:1  },
+      { cat:'liner', name:'High-Temp Liner Sealant',     unit:'tube',   cost:18, qty:2  },
+    ],
+    'gas-liner': [
+      { cat:'liner', name:'SS Flex Liner 5" (gas)',      unit:'lin ft', cost:14, qty:20 },
+      { cat:'liner', name:'Appliance Connector / Boot',  unit:'ea',     cost:70, qty:1  },
+      { cat:'liner', name:'Top Plate',                   unit:'ea',     cost:80, qty:1  },
+      { cat:'liner', name:'SS Rain Cap',                 unit:'ea',     cost:60, qty:1  },
+      { cat:'liner', name:'Storm Collar',                unit:'ea',     cost:28, qty:1  },
+      { cat:'liner', name:'High-Temp Liner Sealant',     unit:'tube',   cost:18, qty:1  },
+    ],
+    'insulated-liner': [
+      { cat:'liner', name:'SS Flex Liner 6"',            unit:'lin ft', cost:18, qty:25 },
+      { cat:'liner', name:'Insulation Wrap (per ft)',    unit:'lin ft', cost:11, qty:25 },
+      { cat:'liner', name:'Tee Connector',               unit:'ea',     cost:95, qty:1  },
+      { cat:'liner', name:'Top Plate',                   unit:'ea',     cost:80, qty:1  },
+      { cat:'liner', name:'SS Rain Cap',                 unit:'ea',     cost:60, qty:1  },
+      { cat:'liner', name:'Storm Collar',                unit:'ea',     cost:28, qty:1  },
+    ],
+    'tuckpointing': [
+      { cat:'masonry', name:'Type S Mortar 60lb',        unit:'bag',   cost:12, qty:4  },
+      { cat:'masonry', name:'Masonry Caulk / Sealant',   unit:'tube',  cost:12, qty:2  },
+      { cat:'consumables', name:'PPE Allowance',         unit:'job',   cost:15, qty:1  },
+      { cat:'consumables', name:'Drill Bits / Blades Allow.',unit:'job',cost:25, qty:1 },
+    ],
+    'crown-repair': [
+      { cat:'masonry', name:'Chimney Crown Sealant',     unit:'gal',   cost:48, qty:1  },
+      { cat:'masonry', name:'Fiber-Reinforced Crown Mix',unit:'50lb',  cost:35, qty:1  },
+      { cat:'consumables', name:'High-Temp Silicone Caulk',unit:'tube',cost:14, qty:2  },
+    ],
+    'crown-rebuild': [
+      { cat:'masonry', name:'Fiber-Reinforced Crown Mix',unit:'50lb',  cost:35, qty:3  },
+      { cat:'masonry', name:'Portland Cement 94lb',      unit:'bag',   cost:18, qty:1  },
+      { cat:'masonry', name:'Chimney Crown Sealant',     unit:'gal',   cost:48, qty:1  },
+      { cat:'masonry', name:'Masonry Caulk / Sealant',   unit:'tube',  cost:12, qty:2  },
+      { cat:'metal',   name:'Single-Flue SS Cap',        unit:'ea',    cost:85, qty:1  },
+    ],
+    'parging': [
+      { cat:'masonry', name:'Parging / Chamber Repair Mix',unit:'gal', cost:55, qty:4  },
+      { cat:'masonry', name:'Refractory Mortar (fireclay)',unit:'50lb',cost:28, qty:1  },
+      { cat:'consumables', name:'PPE Allowance',          unit:'job',  cost:15, qty:1  },
+      { cat:'consumables', name:'Tarp / Interior Protection',unit:'set',cost:22,qty:1  },
+    ],
+    'brick-repair': [
+      { cat:'masonry', name:'Face Brick (standard)',     unit:'ea',    cost:3.50,qty:30 },
+      { cat:'masonry', name:'Type S Mortar 60lb',        unit:'bag',   cost:12,  qty:2  },
+      { cat:'masonry', name:'Masonry Caulk / Sealant',   unit:'tube',  cost:12,  qty:1  },
+    ],
+    'flashing-repair': [
+      { cat:'masonry', name:'Step Flashing Kit',         unit:'kit',   cost:65, qty:1  },
+      { cat:'masonry', name:'Counter Flashing',          unit:'lin ft',cost:14, qty:12 },
+      { cat:'masonry', name:'Expansion Joint Sealant',   unit:'tube',  cost:16, qty:2  },
+      { cat:'consumables', name:'High-Temp Silicone Caulk',unit:'tube',cost:14, qty:2  },
+    ],
+    'waterproofing': [
+      { cat:'masonry', name:'Waterproofing Agent (ChimneySaver)',unit:'gal',cost:72, qty:2 },
+      { cat:'consumables', name:'PPE Allowance',         unit:'job',   cost:15, qty:1  },
+    ],
+    'chase-cover': [
+      { cat:'metal', name:'Stainless Chase Cover (std)',unit:'ea',   cost:325, qty:1  },
+      { cat:'metal', name:'Single-Flue SS Cap',         unit:'ea',   cost:85,  qty:1  },
+      { cat:'consumables', name:'Sheet Metal Screws (box)',unit:'box',cost:12,  qty:1  },
+      { cat:'consumables', name:'High-Temp Silicone Caulk',unit:'tube',cost:14,qty:1  },
+    ],
+    'cap-replace': [
+      { cat:'metal', name:'Single-Flue SS Cap',          unit:'ea',   cost:85, qty:1  },
+    ],
+    'damper-install': [
+      { cat:'metal', name:'Top-Sealing Damper',          unit:'ea',   cost:165, qty:1 },
+      { cat:'consumables', name:'Masonry Anchors (box)', unit:'box',  cost:18,  qty:1 },
+    ],
+    'gas-line': [
+      { cat:'gas', name:'CSST Gas Line',                 unit:'lin ft',cost:5.50,qty:25},
+      { cat:'gas', name:'Gas Shutoff Valve (ball)',      unit:'ea',    cost:28, qty:1  },
+      { cat:'gas', name:'Sediment Trap Kit',             unit:'ea',    cost:18, qty:1  },
+      { cat:'gas', name:'Flex Gas Connector',            unit:'ea',    cost:22, qty:1  },
+      { cat:'gas', name:'Gas Line Sealant / Thread Tape',unit:'roll',  cost:8,  qty:2  },
+    ],
+    'gas-insert': [
+      { cat:'liner', name:'SS Flex Liner 5" (gas)',      unit:'lin ft',cost:14, qty:20 },
+      { cat:'liner', name:'Top Plate',                   unit:'ea',    cost:80, qty:1  },
+      { cat:'liner', name:'SS Rain Cap',                 unit:'ea',    cost:60, qty:1  },
+      { cat:'liner', name:'Appliance Connector / Boot',  unit:'ea',    cost:70, qty:1  },
+      { cat:'gas',   name:'Flex Gas Connector',          unit:'ea',    cost:22, qty:1  },
+      { cat:'gas',   name:'Appliance Adapter Fitting',   unit:'ea',    cost:14, qty:2  },
+    ],
+    'partial-rebuild': [
+      { cat:'masonry', name:'Common Brick',              unit:'ea',    cost:2.50,qty:120},
+      { cat:'masonry', name:'Type S Mortar 60lb',        unit:'bag',   cost:12,  qty:8  },
+      { cat:'masonry', name:'Fiber-Reinforced Crown Mix',unit:'50lb',  cost:35,  qty:2  },
+      { cat:'metal',   name:'Single-Flue SS Cap',        unit:'ea',    cost:85,  qty:1  },
+      { cat:'masonry', name:'Waterproofing Agent (ChimneySaver)',unit:'gal',cost:72,qty:1},
+    ],
+    'full-rebuild': [
+      { cat:'masonry', name:'Common Brick',              unit:'ea',    cost:2.50,qty:500},
+      { cat:'masonry', name:'Face Brick (standard)',     unit:'ea',    cost:3.50,qty:100},
+      { cat:'masonry', name:'Type S Mortar 60lb',        unit:'bag',   cost:12,  qty:25 },
+      { cat:'masonry', name:'Portland Cement 94lb',      unit:'bag',   cost:18,  qty:5  },
+      { cat:'masonry', name:'Fiber-Reinforced Crown Mix',unit:'50lb',  cost:35,  qty:3  },
+      { cat:'liner',   name:'SS Flex Liner 6"',          unit:'lin ft',cost:18,  qty:25 },
+      { cat:'liner',   name:'Insulation Wrap (per ft)',  unit:'lin ft',cost:11,  qty:25 },
+      { cat:'liner',   name:'Top Plate',                 unit:'ea',    cost:80,  qty:1  },
+      { cat:'metal',   name:'Single-Flue SS Cap',        unit:'ea',    cost:85,  qty:1  },
+    ],
+    'prefab-repair': [
+      { cat:'metal',  name:'Stainless Chase Cover (std)',unit:'ea',    cost:325, qty:1  },
+      { cat:'metal',  name:'Single-Flue SS Cap',         unit:'ea',    cost:85,  qty:1  },
+    ],
+    'wood-stove-install': [
+      { cat:'liner', name:'SS Flex Liner 6"',            unit:'lin ft',cost:18, qty:20 },
+      { cat:'liner', name:'Insulation Wrap (per ft)',    unit:'lin ft',cost:11, qty:20 },
+      { cat:'liner', name:'Tee Connector',               unit:'ea',    cost:95, qty:1  },
+      { cat:'liner', name:'Top Plate',                   unit:'ea',    cost:80, qty:1  },
+      { cat:'liner', name:'SS Rain Cap',                 unit:'ea',    cost:60, qty:1  },
+    ],
+    'outdoor-fireplace': [
+      { cat:'masonry', name:'Common Brick',              unit:'ea',    cost:2.50,qty:300},
+      { cat:'masonry', name:'Type S Mortar 60lb',        unit:'bag',   cost:12,  qty:15 },
+      { cat:'masonry', name:'Portland Cement 94lb',      unit:'bag',   cost:18,  qty:4  },
+      { cat:'masonry', name:'Gravel / Aggregate (cu yd)',unit:'cu yd', cost:55,  qty:2  },
+      { cat:'metal',   name:'Single-Flue SS Cap',        unit:'ea',    cost:85,  qty:1  },
+    ],
+    'firebox-repair': [
+      { cat:'masonry', name:'Firebrick (refractory)',    unit:'ea',    cost:4.50,qty:20 },
+      { cat:'masonry', name:'Refractory Mortar (fireclay)',unit:'50lb',cost:28,  qty:2  },
+      { cat:'masonry', name:'Parging / Chamber Repair Mix',unit:'gal', cost:55,  qty:1  },
+    ],
+    'woodstove-insert': [
+      { cat:'consumables', name:'PPE Allowance',         unit:'job',  cost:15, qty:1   },
+      { cat:'consumables', name:'Tarp / Interior Protection',unit:'set',cost:22,qty:1  },
+    ],
+    'furnace-flue': [
+      { cat:'consumables', name:'PPE Allowance',         unit:'job',  cost:15, qty:1   },
+    ],
+    'custom': [],
+  };
+
+  const mats = jobMats[type] || [];
+  addMaterials(mats);
+  renderMaterialsTable();
+}
+
+function loadJobLabor(type) {
+  const laborDefaults = {
+    'l1-inspection':    { tech:1.5,  helper:0,   mason:0, gas:0, setup:0.5, drive:0.5 },
+    'l2-inspection':    { tech:2,    helper:0,   mason:0, gas:0, setup:0.5, drive:0.5 },
+    'cleaning-l1':      { tech:2.5,  helper:0,   mason:0, gas:0, setup:0.5, drive:0.5 },
+    'cleaning-l2':      { tech:3,    helper:0,   mason:0, gas:0, setup:0.5, drive:0.5 },
+    'woodstove-insert': { tech:3,    helper:1,   mason:0, gas:0, setup:0.5, drive:0.5 },
+    'furnace-flue':     { tech:2.5,  helper:0,   mason:0, gas:0, setup:0.5, drive:0.5 },
+    'ss-liner':         { tech:5,    helper:2,   mason:0, gas:0, setup:1,   drive:0.5 },
+    'gas-liner':        { tech:3,    helper:1,   mason:0, gas:1, setup:0.5, drive:0.5 },
+    'insulated-liner':  { tech:6,    helper:2,   mason:0, gas:0, setup:1,   drive:0.5 },
+    'tuckpointing':     { tech:2,    helper:2,   mason:6, gas:0, setup:1,   drive:0.5 },
+    'crown-repair':     { tech:2.5,  helper:1,   mason:0, gas:0, setup:0.5, drive:0.5 },
+    'crown-rebuild':    { tech:1,    helper:1,   mason:4, gas:0, setup:1,   drive:0.5 },
+    'parging':          { tech:1,    helper:0,   mason:4, gas:0, setup:1,   drive:0.5 },
+    'brick-repair':     { tech:2,    helper:2,   mason:4, gas:0, setup:1,   drive:0.5 },
+    'flashing-repair':  { tech:3,    helper:1,   mason:0, gas:0, setup:0.5, drive:0.5 },
+    'waterproofing':    { tech:3,    helper:1,   mason:0, gas:0, setup:0.5, drive:0.5 },
+    'chase-cover':      { tech:2.5,  helper:1,   mason:0, gas:0, setup:0.5, drive:0.5 },
+    'cap-replace':      { tech:1.5,  helper:0,   mason:0, gas:0, setup:0.5, drive:0.5 },
+    'damper-install':   { tech:2,    helper:0.5, mason:0, gas:0, setup:0.5, drive:0.5 },
+    'gas-line':         { tech:2,    helper:1,   mason:0, gas:4, setup:0.5, drive:0.5 },
+    'gas-insert':       { tech:2,    helper:1,   mason:0, gas:3, setup:1,   drive:0.5 },
+    'prefab-repair':    { tech:3,    helper:1,   mason:0, gas:0, setup:0.5, drive:0.5 },
+    'wood-stove-install':{ tech:4,   helper:2,   mason:1, gas:0, setup:1,   drive:0.5 },
+    'partial-rebuild':  { tech:2,    helper:2,   mason:12,gas:0, setup:2,   drive:0.5 },
+    'full-rebuild':     { tech:4,    helper:4,   mason:24,gas:0, setup:4,   drive:1   },
+    'firebox-repair':   { tech:1,    helper:0,   mason:4, gas:0, setup:1,   drive:0.5 },
+    'outdoor-fireplace':{ tech:2,    helper:4,   mason:16,gas:0, setup:2,   drive:0.5 },
+    'custom':           { tech:4,    helper:2,   mason:0, gas:0, setup:1,   drive:0.5 },
+  };
+  const d = laborDefaults[type] || { tech:4, helper:2, mason:0, gas:0, setup:1, drive:0.5 };
+  $('lab-tech').value    = d.tech;
+  $('lab-helper').value  = d.helper;
+  $('lab-mason').value   = d.mason;
+  $('lab-gas').value     = d.gas;
+  $('lab-setup').value   = d.setup;
+  $('lab-drive').value   = d.drive;
+  renderLaborTable();
+}
+
+/* =============================================================
+   TEMPLATES
+   ============================================================= */
+function loadTemplate(templateId) {
+  const templates = {
+    'standard-l1': {
+      job:'l1-inspection', notes:'Standard Level 1 visual inspection. Inspect firebox, damper, crown, flashing, cap, and accessible flue. Digital report provided.',
+      labor:{ tech:1.5, helper:0, mason:0, gas:0, setup:0.5, drive:0.5 }
+    },
+    'cleaning-l2-std': {
+      job:'cleaning-l2', notes:'Full fireplace cleaning with Level 2 camera video inspection. Sweep, brush, and vacuum firebox, smoke chamber, and flue. Video report provided.',
+      labor:{ tech:3, helper:0, mason:0, gas:0, setup:0.5, drive:0.5 }
+    },
+    'liner-2story': {
+      job:'ss-liner', notes:'2-story residential, 25ft 6" 316Ti SS flex liner with insulation wrap. Includes tee, top plate, SS rain cap, storm collar, and appliance connector.',
+      labor:{ tech:5, helper:2, mason:0, gas:0, setup:1, drive:0.5 }
+    },
+    'gas-liner-drop': {
+      job:'gas-liner', notes:'Standard gas liner drop for existing gas appliance. 5" 304 SS flex liner, top plate, and appliance connector.',
+      labor:{ tech:2.5, helper:1, mason:0, gas:1, setup:0.5, drive:0.5 }
+    },
+    'crown-rebuild-std': {
+      job:'crown-rebuild', notes:'Remove deteriorated crown. Form and pour fiber-reinforced concrete crown with proper overhang and drip edge. Apply crown sealant. Install SS cap.',
+      labor:{ tech:1, helper:1, mason:4, gas:0, setup:1, drive:0.5 }
+    },
+    'chase-cover-std': {
+      job:'chase-cover', notes:'Remove rusted/failing chase cover. Measure and fabricate/install custom SS chase cover. Replace cap. Seal and flash.',
+      labor:{ tech:2, helper:1, mason:0, gas:0, setup:0.5, drive:0.5 }
+    },
+    'tuckpointing-std': {
+      job:'tuckpointing', notes:'Rake deteriorated mortar joints. Repoint with Type S mortar to match existing joints. Approximately 1-story masonry chimney exterior.',
+      labor:{ tech:1, helper:2, mason:6, gas:0, setup:1, drive:0.5 }
+    },
+    'parging-std': {
+      job:'parging', notes:'Clean smoke chamber. Apply full coat of parging mix to smoke chamber walls and corbelled joints. Smooth to code specifications.',
+      labor:{ tech:1, helper:0, mason:4, gas:0, setup:1, drive:0.5 }
+    },
+    'gas-line-std': {
+      job:'gas-line', notes:'Install approximately 25 ft CSST gas line from existing supply to fireplace location. Pressure test and certify.',
+      labor:{ tech:1, helper:1, mason:0, gas:4, setup:0.5, drive:0.5 }
+    },
+    'partial-rebuild-std': {
+      job:'partial-rebuild', notes:'Tear down and rebuild chimney above roofline. Approx 12 courses of brick. New fiber-reinforced crown, SS cap, and waterproofing seal.',
+      labor:{ tech:2, helper:2, mason:12, gas:0, setup:2, drive:0.5 }
+    },
+  };
+
+  const t = templates[templateId];
+  if (!t) return;
+
+  // Find and click the job type card
+  const cards = document.querySelectorAll('.job-type-card');
+  let matchCard = null;
+  cards.forEach(c => { if (c.getAttribute('onclick')?.includes(`'${t.job}'`)) matchCard = c; });
+
+  selectJob(t.job, matchCard);
+
+  // Apply labor
+  if (t.labor) {
+    $('lab-tech').value   = t.labor.tech;
+    $('lab-helper').value = t.labor.helper;
+    $('lab-mason').value  = t.labor.mason;
+    $('lab-gas').value    = t.labor.gas;
+    $('lab-setup').value  = t.labor.setup;
+    $('lab-drive').value  = t.labor.drive;
+    renderLaborTable();
+  }
+
+  if (t.notes) $('est-notes').value = t.notes;
+  estCalc();
+
+  // Scroll to content
+  $('est-job-content').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+/* =============================================================
+   MAIN ESTIMATE CALCULATION
+   ============================================================= */
+function estCalc() {
+  if (!currentJobType) return;
+
+  // 1. Materials
+  const matTotal = materialsData.reduce((s,m) => s + (m.qty * m.cost), 0);
+
+  // 2. Labor
+  const burden = 1 + (gv('cs-burden') / 100);
+  const laborTotal =
+    (gv('lab-tech')   * gv('cs-techRate')   +
+     gv('lab-helper') * gv('cs-helperRate') +
+     gv('lab-mason')  * gv('cs-masonRate')  +
+     gv('lab-gas')    * gv('cs-gasRate')    +
+     gv('lab-setup')  * gv('cs-techRate')   +
+     gv('lab-drive')  * gv('cs-techRate'))
+    * burden;
+  renderLaborTable();
+
+  // 3. Consumables % on materials
+  const consumablesAmt = matTotal * (gv('cs-consumables') / 100);
+
+  // 4. Overhead: truck + fuel + (overhead% on labor+mat)
+  const overheadAmt = gv('cs-truck') + gv('cs-fuel') +
+    ((matTotal + laborTotal) * (gv('cs-overhead') / 100));
+
+  // 5. Permit / disposal / misc
+  let miscAmt = 0;
+  if ($('est-permit')?.checked) miscAmt += gv('cs-permit');
+  if ($('est-disposal')?.checked) miscAmt += gv('cs-disposal');
+  if ($('est-scaffolding')?.checked) miscAmt += gv('cs-scaffold');
+  if ($('est-rush')?.checked) miscAmt += gv('cs-rush');
+  if ($('est-promo')?.checked) miscAmt -= 500; // $500 promo discount
+
+  // 6. Complexity adjusters
+  const complexityAmt = getComplexityTotal();
+  $('complexity-subtotal').textContent = money(complexityAmt);
+
+  // 7. Pre-contingency cost
+  const preCont = matTotal + consumablesAmt + laborTotal + overheadAmt + miscAmt + complexityAmt;
+
+  // 8. Contingency
+  const contingencyAmt = preCont * (gv('cs-contingency') / 100);
+
+  // 9. Total direct cost
+  const directCost = preCont + contingencyAmt;
+
+  // 10. Markup → selling price
+  const markupPct = gv('cs-markup');
+  const markupAmt = directCost * (markupPct / 100);
+  const sellingPrice = directCost + markupAmt;
+
+  // 11. Tax
+  const taxAmt = sellingPrice * (gv('cs-tax') / 100);
+  const finalPrice = sellingPrice + taxAmt;
+
+  // 12. Gross margin = markup / selling price
+  const grossMargin = finalPrice > 0 ? (finalPrice - directCost) / finalPrice * 100 : 0;
+
+  // 13. Estimate bands
+  const lowEst    = finalPrice * 0.85;
+  const targetEst = finalPrice;
+  const premiumEst= finalPrice * 1.20;
+
+  // Update outputs
+  $('out-materials').textContent    = money(matTotal);
+  $('out-consumables').textContent  = money(consumablesAmt);
+  $('out-labor').textContent        = money(laborTotal);
+  $('out-overhead').textContent     = money(overheadAmt);
+  $('out-misc').textContent         = money(miscAmt);
+  $('out-contingency').textContent  = money(contingencyAmt);
+  $('out-direct-cost').textContent  = money(directCost);
+  $('out-markup-pct-label').textContent = markupPct;
+  $('out-markup-amount').textContent= money(markupAmt);
+  $('out-selling-price').textContent= money(finalPrice);
+  $('out-margin').textContent       = grossMargin.toFixed(1) + '%';
+  $('out-low').textContent          = money(lowEst);
+  $('out-target').textContent       = money(targetEst);
+  $('out-premium').textContent      = money(premiumEst);
+
+  // Header totals
+  $('est-grand-total').textContent  = money(finalPrice);
+  $('est-margin-pct').textContent   = grossMargin.toFixed(1) + '%';
+  $('est-cost-display').textContent = money(directCost);
+
+  // Out job meta
+  const cust = $('est-customer')?.value;
+  const addr = $('est-address')?.value;
+  const ref  = $('est-jobref')?.value;
+  const metaParts = [];
+  if (cust) metaParts.push(cust);
+  if (addr) metaParts.push(addr);
+  if (ref)  metaParts.push(ref);
+  const metaEl = $('out-job-meta');
+  if (metaEl) metaEl.textContent = metaParts.join(' · ');
+}
+
+/* =============================================================
+   ESTIMATE RESET
+   ============================================================= */
+function estReset() {
+  if (!confirm('Reset the current estimate? This will clear all scope inputs, materials, and notes. Company settings will be preserved.')) return;
+  currentJobType = null;
+  materialsData = [];
+  materialRowId = 0;
+  activeComplexity.clear();
+  $('est-no-job').style.display = 'block';
+  $('est-job-content').style.display = 'none';
+  document.querySelectorAll('.job-type-card').forEach(c => c.classList.remove('selected'));
+  $('est-grand-total').textContent = '$0';
+  $('est-margin-pct').textContent  = '0%';
+  $('est-cost-display').textContent= '$0';
+  $('est-job-label').textContent   = 'No job type selected';
+}
+
+/* =============================================================
+   PRINT / COPY
+   ============================================================= */
+function printEstimate() {
+  window.print();
+}
+
+function copyEstimate() {
+  const jobTitle = $('out-job-title')?.textContent || 'Estimate';
+  const customer = $('est-customer')?.value;
+  const addr     = $('est-address')?.value;
+  const notes    = $('est-notes')?.value;
+  const date     = $('out-date')?.textContent;
+
+  const lines = [
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    'CHIM-CHIM CHUREE CHIMNEY & MASONRY',
+    '(703) 330-4912 | info@chimchimchureemasonry.com',
+    'Manassas Park, VA 20111',
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    jobTitle,
+    customer ? 'Customer: ' + customer : '',
+    addr     ? 'Address:  ' + addr : '',
+    date     ? 'Date:     ' + date : '',
+    '──────────────────────────────────────',
+    'Materials & Components:  ' + ($('out-materials')?.textContent || '$0'),
+    'Labor (burdened):        ' + ($('out-labor')?.textContent    || '$0'),
+    'Overhead / Truck / Fuel: ' + ($('out-overhead')?.textContent  || '$0'),
+    'Permit / Disposal / Misc:' + ($('out-misc')?.textContent      || '$0'),
+    'Contingency:             ' + ($('out-contingency')?.textContent|| '$0'),
+    '──────────────────────────────────────',
+    'Total Direct Cost:       ' + ($('out-direct-cost')?.textContent|| '$0'),
+    'Markup:                  ' + ($('out-markup-amount')?.textContent|| '$0'),
+    '══════════════════════════════════════',
+    'ESTIMATED SELLING PRICE: ' + ($('out-selling-price')?.textContent|| '$0'),
+    'Gross Margin:            ' + ($('est-margin-pct')?.textContent || '0%'),
+    '══════════════════════════════════════',
+    'Low / Target / Premium:  ' +
+      ($('out-low')?.textContent||'$0') + ' / ' +
+      ($('out-target')?.textContent||'$0') + ' / ' +
+      ($('out-premium')?.textContent||'$0'),
+    '',
+    notes ? 'SCOPE NOTES:\n' + notes : '',
+    '──────────────────────────────────────',
+    'DISCLAIMER: This is an internal planning estimate only.',
+    'Final pricing may vary based on field conditions.',
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+  ].filter(l => l !== undefined);
+
+  const text = lines.join('\n');
+  navigator.clipboard.writeText(text).then(() => {
+    alert('Estimate summary copied to clipboard.');
+  }).catch(() => {
+    // Fallback
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    alert('Estimate summary copied to clipboard.');
+  });
+}
+
+/* =============================================================
+   INIT
+   ============================================================= */
+document.addEventListener('DOMContentLoaded', () => {
+  loadDefaults();
+  tlCalc();
+  renderComplexityGrid();
+  renderLaborTable();
+});
+</script>
+</body>
+</html>
