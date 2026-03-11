@@ -1,0 +1,2006 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Time Leak & Revenue Recovery Calculator — Chim-Chim Churee Chimney & Masonry</title>
+  <meta name="description" content="See how much time and revenue your chimney business loses monthly to callbacks, missed calls, admin work, and operational chaos. Built for Chim-Chim Churee Chimney & Masonry." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Barlow+Condensed:wght@400;500;600;700;800&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    /* =============================================================
+       TOKENS & RESET
+    ============================================================= */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --black:      #07060A;
+      --dark:       #0E0C0F;
+      --card:       #141218;
+      --surface:    #1C1920;
+      --border:     #26222C;
+      --border-hi:  #3A3444;
+      --gold:       #C8902A;
+      --gold-light: #E4B354;
+      --gold-dim:   rgba(200,144,42,.13);
+      --gold-glow:  rgba(200,144,42,.06);
+      --cream:      #EFE9D8;
+      --cream-dim:  #9A9080;
+      --green:      #52B574;
+      --green-dim:  rgba(82,181,116,.12);
+
+      --ff-serif:   'Playfair Display', Georgia, serif;
+      --ff-cond:    'Barlow Condensed', 'Arial Narrow', sans-serif;
+      --ff-body:    'Barlow', system-ui, sans-serif;
+
+      --radius-sm:  4px;
+      --radius:     8px;
+      --radius-lg:  12px;
+
+      --shadow-card: 0 2px 24px rgba(0,0,0,.45);
+      --shadow-glow: 0 0 40px rgba(200,144,42,.08);
+    }
+
+    html { scroll-behavior: smooth; font-size: 16px; }
+
+    body {
+      font-family: var(--ff-body);
+      background: var(--black);
+      color: var(--cream);
+      line-height: 1.6;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Grain overlay */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9000;
+      opacity: .35;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='.07'/%3E%3C/svg%3E");
+      background-size: 300px;
+    }
+
+    img { display: block; max-width: 100%; }
+    a { color: inherit; text-decoration: none; }
+
+    .container {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 0 1.75rem;
+    }
+
+    .eyebrow {
+      font-family: var(--ff-cond);
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .22em;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+
+    .section-title {
+      font-family: var(--ff-serif);
+      font-size: clamp(2rem, 4vw, 2.9rem);
+      font-weight: 900;
+      line-height: 1.15;
+      color: var(--cream);
+    }
+
+    .gold  { color: var(--gold); }
+    .green { color: var(--green); }
+    .muted { color: var(--cream-dim); }
+    .italic { font-style: italic; }
+
+    /* =============================================================
+       NAVIGATION
+    ============================================================= */
+    .nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 500;
+      background: rgba(7,6,10,.9);
+      backdrop-filter: blur(14px) saturate(160%);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      height: 64px;
+    }
+
+    .nav-brand {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .nav-name {
+      font-family: var(--ff-cond);
+      font-size: 1.05rem;
+      font-weight: 800;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--cream);
+      white-space: nowrap;
+    }
+
+    .nav-tagline {
+      font-family: var(--ff-cond);
+      font-size: .65rem;
+      font-weight: 500;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+    }
+
+    .nav-phone {
+      font-family: var(--ff-cond);
+      font-size: .95rem;
+      font-weight: 700;
+      color: var(--cream-dim);
+      letter-spacing: .04em;
+      transition: color .2s;
+    }
+
+    .nav-phone:hover { color: var(--gold-light); }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+      padding: .55rem 1.35rem;
+      border-radius: var(--radius-sm);
+      font-family: var(--ff-cond);
+      font-size: .78rem;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all .2s ease;
+      white-space: nowrap;
+    }
+
+    .btn-gold {
+      background: var(--gold);
+      color: var(--black);
+    }
+    .btn-gold:hover {
+      background: var(--gold-light);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(200,144,42,.3);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--cream-dim);
+      border-color: var(--border);
+    }
+    .btn-ghost:hover {
+      color: var(--cream);
+      border-color: var(--border-hi);
+    }
+
+    /* =============================================================
+       HERO
+    ============================================================= */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 9rem 0 5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Brick-like grid pattern */
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 80px 40px;
+      opacity: .18;
+      mask-image: radial-gradient(ellipse 80% 80% at 30% 50%, black 40%, transparent 100%);
+    }
+
+    /* Ambient glow */
+    .hero::after {
+      content: '';
+      position: absolute;
+      top: 50%; left: 35%;
+      transform: translate(-50%, -55%);
+      width: 900px; height: 700px;
+      background: radial-gradient(ellipse, rgba(200,144,42,.09) 0%, transparent 68%);
+      pointer-events: none;
+    }
+
+    .hero-inner {
+      position: relative;
+      z-index: 2;
+      display: grid;
+      grid-template-columns: 1fr 420px;
+      gap: 5rem;
+      align-items: center;
+    }
+
+    .hero-eyebrow-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .hero-line {
+      flex: 1;
+      max-width: 60px;
+      height: 1px;
+      background: linear-gradient(90deg, var(--gold), transparent);
+    }
+
+    .hero h1 {
+      font-family: var(--ff-serif);
+      font-size: clamp(3rem, 5.5vw, 5.2rem);
+      font-weight: 900;
+      line-height: 1.04;
+      margin-bottom: 1.6rem;
+      color: var(--cream);
+    }
+
+    .hero h1 em {
+      font-style: italic;
+      color: var(--gold);
+    }
+
+    .hero-sub {
+      font-size: 1.05rem;
+      color: var(--cream-dim);
+      line-height: 1.75;
+      max-width: 560px;
+      margin-bottom: 2.5rem;
+      font-weight: 300;
+    }
+
+    .hero-ctas {
+      display: flex;
+      gap: .85rem;
+      flex-wrap: wrap;
+      margin-bottom: 3.5rem;
+    }
+
+    .hero-stats {
+      display: flex;
+      gap: 2.5rem;
+      flex-wrap: wrap;
+    }
+
+    .hero-stat {
+      position: relative;
+      padding-left: 1.1rem;
+    }
+
+    .hero-stat::before {
+      content: '';
+      position: absolute;
+      left: 0; top: .2em; bottom: .2em;
+      width: 2px;
+      background: var(--gold);
+    }
+
+    .hero-stat-num {
+      font-family: var(--ff-cond);
+      font-size: 1.9rem;
+      font-weight: 800;
+      color: var(--gold);
+      line-height: 1;
+    }
+
+    .hero-stat-desc {
+      font-size: .75rem;
+      color: var(--cream-dim);
+      line-height: 1.4;
+      margin-top: .2rem;
+    }
+
+    /* Hero Quick-Results Preview Card */
+    .hero-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      box-shadow: var(--shadow-card), var(--shadow-glow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--gold), var(--gold-light), transparent);
+    }
+
+    .hero-card-label {
+      font-family: var(--ff-cond);
+      font-size: .68rem;
+      font-weight: 700;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      color: var(--cream-dim);
+      margin-bottom: 1.5rem;
+    }
+
+    .hero-card-stats {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .hc-stat {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: .9rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .hc-stat:last-child { border-bottom: none; }
+
+    .hc-label {
+      font-size: .82rem;
+      color: var(--cream-dim);
+    }
+
+    .hc-value {
+      font-family: var(--ff-cond);
+      font-size: 1.25rem;
+      font-weight: 800;
+    }
+
+    .hc-value.gold { color: var(--gold); }
+    .hc-value.green { color: var(--green); }
+    .hc-value.white { color: var(--cream); }
+
+    .hero-card-cta {
+      margin-top: 1.5rem;
+      width: 100%;
+      justify-content: center;
+      padding: .8rem;
+    }
+
+    /* =============================================================
+       INTRO
+    ============================================================= */
+    .intro {
+      padding: 6rem 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .intro-grid {
+      display: grid;
+      grid-template-columns: 1fr 420px;
+      gap: 5rem;
+      align-items: start;
+    }
+
+    .intro-text .section-title { margin: .7rem 0 1.4rem; }
+
+    .intro-text p {
+      color: var(--cream-dim);
+      line-height: 1.82;
+      margin-bottom: 1.1rem;
+      font-size: .97rem;
+    }
+
+    .badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .5rem;
+      margin-top: 1.75rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: .3rem .75rem;
+      background: var(--gold-dim);
+      border: 1px solid rgba(200,144,42,.22);
+      border-radius: 3px;
+      font-family: var(--ff-cond);
+      font-size: .68rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--gold-light);
+    }
+
+    /* Benchmark box */
+    .benchmark-box {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow-card);
+    }
+
+    .benchmark-head {
+      padding: 1.25rem 1.75rem;
+      border-bottom: 1px solid var(--border);
+      font-family: var(--ff-cond);
+      font-size: .78rem;
+      font-weight: 700;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      color: var(--cream-dim);
+      background: var(--surface);
+    }
+
+    .benchmark-rows { padding: .5rem 0; }
+
+    .bench-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: .75rem 1.75rem;
+      border-bottom: 1px solid var(--border);
+      gap: 1.5rem;
+    }
+
+    .bench-row:last-child { border-bottom: none; }
+
+    .bench-label {
+      font-size: .82rem;
+      color: var(--cream-dim);
+      line-height: 1.3;
+    }
+
+    .bench-val {
+      font-family: var(--ff-cond);
+      font-size: .95rem;
+      font-weight: 700;
+      color: var(--gold-light);
+      white-space: nowrap;
+    }
+
+    .bench-note {
+      font-size: .7rem;
+      color: var(--cream-dim);
+      font-style: italic;
+      padding: .85rem 1.75rem;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+    }
+
+    /* =============================================================
+       CALCULATOR
+    ============================================================= */
+    .calc-section {
+      padding: 6rem 0;
+      border-top: 1px solid var(--border);
+      position: relative;
+    }
+
+    .calc-head {
+      text-align: center;
+      margin-bottom: 3.5rem;
+    }
+
+    .calc-head .section-title { margin: .7rem 0 .9rem; }
+
+    .calc-head p {
+      color: var(--cream-dim);
+      font-size: .97rem;
+      max-width: 560px;
+      margin: 0 auto;
+    }
+
+    .calc-layout {
+      display: grid;
+      grid-template-columns: 440px 1fr;
+      gap: 2rem;
+      align-items: start;
+    }
+
+    /* -------- INPUT PANEL -------- */
+    .input-panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow-card);
+      position: sticky;
+      top: 76px;
+      max-height: calc(100vh - 96px);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .input-panel-head {
+      padding: 1.2rem 1.6rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+
+    .panel-title {
+      font-family: var(--ff-cond);
+      font-size: .88rem;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--cream);
+    }
+
+    .reset-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: .28rem .7rem;
+      font-family: var(--ff-cond);
+      font-size: .65rem;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--cream-dim);
+      cursor: pointer;
+      transition: all .2s;
+    }
+
+    .reset-btn:hover {
+      color: var(--gold);
+      border-color: rgba(200,144,42,.4);
+    }
+
+    .input-scroll {
+      overflow-y: auto;
+      flex: 1;
+      padding: 1.4rem;
+    }
+
+    .input-scroll::-webkit-scrollbar { width: 3px; }
+    .input-scroll::-webkit-scrollbar-track { background: transparent; }
+    .input-scroll::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 2px; }
+
+    .input-group {
+      margin-bottom: 1.6rem;
+    }
+
+    .ig-title {
+      font-family: var(--ff-cond);
+      font-size: .63rem;
+      font-weight: 700;
+      letter-spacing: .22em;
+      text-transform: uppercase;
+      color: var(--gold);
+      padding-bottom: .55rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: .8rem;
+    }
+
+    .field {
+      margin-bottom: .7rem;
+    }
+
+    .field-label {
+      display: block;
+      font-size: .8rem;
+      color: var(--cream-dim);
+      margin-bottom: .3rem;
+      line-height: 1.35;
+    }
+
+    .field-input {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: .55rem .85rem;
+      color: var(--cream);
+      font-family: var(--ff-cond);
+      font-size: 1.02rem;
+      font-weight: 600;
+      outline: none;
+      transition: border-color .18s, box-shadow .18s;
+      -moz-appearance: textfield;
+    }
+
+    .field-input::-webkit-outer-spin-button,
+    .field-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+    .field-input:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 2px rgba(200,144,42,.12);
+    }
+
+    /* -------- RESULTS PANEL -------- */
+    .results-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 1.4rem;
+    }
+
+    /* Primary metrics */
+    .primary-metrics {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .metric-card {
+      border-radius: var(--radius);
+      padding: 1.6rem 1.75rem;
+      box-shadow: var(--shadow-card);
+      transition: transform .2s, box-shadow .2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .metric-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-card), 0 8px 32px rgba(0,0,0,.3);
+    }
+
+    .mc-gold {
+      background: linear-gradient(135deg, #C8902A 0%, #A87218 100%);
+      color: var(--black);
+    }
+
+    .mc-dark {
+      background: var(--card);
+      border: 1px solid var(--border);
+    }
+
+    .mc-green {
+      background: var(--card);
+      border: 1px solid var(--border);
+    }
+
+    .mc-label {
+      font-family: var(--ff-cond);
+      font-size: .65rem;
+      font-weight: 700;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      margin-bottom: .55rem;
+      line-height: 1;
+    }
+
+    .mc-gold .mc-label { color: rgba(0,0,0,.65); }
+    .mc-dark .mc-label,
+    .mc-green .mc-label { color: var(--cream-dim); }
+
+    .mc-value {
+      font-family: var(--ff-cond);
+      font-size: 2.4rem;
+      font-weight: 800;
+      line-height: 1;
+      transition: all .3s ease;
+    }
+
+    .mc-gold .mc-value   { color: var(--black); }
+    .mc-dark .mc-value   { color: var(--gold); }
+    .mc-green .mc-value  { color: var(--green); }
+
+    .mc-sub {
+      font-size: .72rem;
+      margin-top: .4rem;
+      line-height: 1.3;
+    }
+
+    .mc-gold .mc-sub  { color: rgba(0,0,0,.55); }
+    .mc-dark .mc-sub,
+    .mc-green .mc-sub { color: var(--cream-dim); }
+
+    /* Annual panel */
+    .annual-panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.6rem 1.75rem;
+      box-shadow: var(--shadow-card);
+    }
+
+    .panel-section-title {
+      font-family: var(--ff-cond);
+      font-size: .68rem;
+      font-weight: 700;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      color: var(--cream-dim);
+      margin-bottom: 1.2rem;
+    }
+
+    .annual-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.25rem;
+    }
+
+    .ag-label {
+      font-size: .75rem;
+      color: var(--cream-dim);
+      margin-bottom: .3rem;
+    }
+
+    .ag-value {
+      font-family: var(--ff-cond);
+      font-size: 1.7rem;
+      font-weight: 800;
+      line-height: 1;
+      transition: all .3s ease;
+    }
+
+    /* Breakdown */
+    .breakdown-panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.6rem 1.75rem;
+      box-shadow: var(--shadow-card);
+    }
+
+    .breakdown-row {
+      margin-bottom: .95rem;
+    }
+
+    .br-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: .3rem;
+    }
+
+    .br-name {
+      font-size: .8rem;
+      color: var(--cream-dim);
+    }
+
+    .br-hrs {
+      font-family: var(--ff-cond);
+      font-size: .88rem;
+      font-weight: 700;
+      color: var(--cream);
+    }
+
+    .br-track {
+      height: 5px;
+      background: var(--surface);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .br-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width .55s cubic-bezier(.4,0,.2,1);
+      background: var(--gold);
+    }
+
+    .br-fill.admin { background: var(--green); }
+
+    /* =============================================================
+       INSIGHT
+    ============================================================= */
+    .insight-section { padding: 3rem 0; }
+
+    .insight-card {
+      background: linear-gradient(140deg, #1B1408 0%, #100E08 60%, #0C0A0F 100%);
+      border: 1px solid rgba(200,144,42,.25);
+      border-radius: var(--radius-lg);
+      padding: 3rem 3.5rem;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 4px 40px rgba(0,0,0,.5), var(--shadow-glow);
+    }
+
+    .insight-card::before {
+      content: '';
+      position: absolute;
+      top: -80px; right: -80px;
+      width: 400px; height: 400px;
+      background: radial-gradient(ellipse, rgba(200,144,42,.1) 0%, transparent 65%);
+      pointer-events: none;
+    }
+
+    .insight-card::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--gold) 0%, var(--gold-light) 50%, transparent 100%);
+    }
+
+    .insight-header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 2rem;
+      align-items: start;
+      margin-bottom: 2rem;
+    }
+
+    .insight-card .section-title {
+      font-size: clamp(1.6rem, 3vw, 2.2rem);
+      margin-top: .6rem;
+    }
+
+    .insight-text {
+      font-size: 1.02rem;
+      color: var(--cream-dim);
+      line-height: 1.82;
+      max-width: 820px;
+    }
+
+    .insight-text strong { color: var(--gold-light); font-weight: 600; }
+
+    /* ROI Tiers */
+    .roi-tiers {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-top: 2.5rem;
+    }
+
+    .roi-tier {
+      background: rgba(255,255,255,.03);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.6rem 1.4rem;
+      text-align: center;
+      position: relative;
+    }
+
+    .roi-tier.featured {
+      border-color: rgba(200,144,42,.38);
+      background: rgba(200,144,42,.05);
+    }
+
+    .tier-tag {
+      position: absolute;
+      top: -10px; left: 50%;
+      transform: translateX(-50%);
+      background: var(--gold);
+      color: var(--black);
+      font-family: var(--ff-cond);
+      font-size: .6rem;
+      font-weight: 800;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      padding: .18rem .55rem;
+      border-radius: 2px;
+    }
+
+    .tier-price {
+      font-family: var(--ff-cond);
+      font-size: 1.7rem;
+      font-weight: 800;
+      color: var(--cream);
+    }
+
+    .tier-per {
+      font-size: .72rem;
+      color: var(--cream-dim);
+      margin-bottom: .75rem;
+    }
+
+    .tier-roi {
+      font-family: var(--ff-cond);
+      font-size: 2.4rem;
+      font-weight: 800;
+      color: var(--gold);
+      line-height: 1;
+      transition: all .3s;
+    }
+
+    .tier-roi-label {
+      font-size: .7rem;
+      color: var(--cream-dim);
+      margin-top: .25rem;
+    }
+
+    /* =============================================================
+       OPERATIONS
+    ============================================================= */
+    .operations-section {
+      padding: 6rem 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .ops-header { max-width: 640px; margin-bottom: 3.5rem; }
+    .ops-header .section-title { margin: .7rem 0 1.1rem; }
+    .ops-header p { color: var(--cream-dim); font-size: .97rem; line-height: 1.75; }
+
+    .ops-layout {
+      display: grid;
+      grid-template-columns: 400px 1fr;
+      gap: 5rem;
+      align-items: start;
+    }
+
+    .ops-left h3 {
+      font-family: var(--ff-serif);
+      font-size: 1.4rem;
+      color: var(--cream);
+      margin-bottom: 1rem;
+    }
+
+    .ops-left p {
+      font-size: .93rem;
+      color: var(--cream-dim);
+      line-height: 1.8;
+      margin-bottom: 1.1rem;
+    }
+
+    .ops-items { display: flex; flex-direction: column; }
+
+    .ops-item {
+      display: flex;
+      gap: 1.1rem;
+      align-items: flex-start;
+      padding: 1.15rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .ops-item:first-child { border-top: 1px solid var(--border); }
+
+    .ops-icon {
+      width: 38px; height: 38px;
+      background: var(--gold-dim);
+      border: 1px solid rgba(200,144,42,.2);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.05rem;
+      flex-shrink: 0;
+      margin-top: .1rem;
+    }
+
+    .ops-body h4 {
+      font-family: var(--ff-cond);
+      font-size: .95rem;
+      font-weight: 700;
+      letter-spacing: .04em;
+      color: var(--cream);
+      margin-bottom: .25rem;
+    }
+
+    .ops-body p {
+      font-size: .8rem;
+      color: var(--cream-dim);
+      line-height: 1.55;
+    }
+
+    /* =============================================================
+       SERVICES
+    ============================================================= */
+    .services-section {
+      padding: 6rem 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .services-section .section-title { margin: .7rem 0 0; max-width: 720px; }
+    .services-section > .container > p {
+      color: var(--cream-dim);
+      font-size: .97rem;
+      margin: 1rem 0 2.5rem;
+      max-width: 680px;
+    }
+
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
+
+    .svc-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.6rem;
+      transition: border-color .2s, transform .2s;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .svc-card:hover {
+      border-color: var(--border-hi);
+      transform: translateY(-2px);
+    }
+
+    .svc-type {
+      font-family: var(--ff-cond);
+      font-size: .62rem;
+      font-weight: 700;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: .5rem;
+    }
+
+    .svc-card h4 {
+      font-family: var(--ff-cond);
+      font-size: 1.02rem;
+      font-weight: 700;
+      letter-spacing: .04em;
+      color: var(--cream);
+      margin-bottom: .55rem;
+    }
+
+    .svc-card p {
+      font-size: .8rem;
+      color: var(--cream-dim);
+      line-height: 1.6;
+      flex: 1;
+    }
+
+    .svc-leads {
+      margin-top: .9rem;
+      padding-top: .9rem;
+      border-top: 1px solid var(--border);
+      font-size: .75rem;
+      color: var(--gold-light);
+      font-style: italic;
+      line-height: 1.45;
+    }
+
+    .promo-tag {
+      display: inline-block;
+      background: rgba(82,181,116,.12);
+      border: 1px solid rgba(82,181,116,.25);
+      border-radius: 3px;
+      padding: .15rem .5rem;
+      font-size: .65rem;
+      font-family: var(--ff-cond);
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--green);
+      margin-top: .4rem;
+    }
+
+    .insight-box {
+      margin-top: 2rem;
+      background: var(--surface);
+      border-left: 3px solid var(--gold);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      padding: 1.4rem 2rem;
+    }
+
+    .insight-box p {
+      font-size: .93rem;
+      color: var(--cream-dim);
+      line-height: 1.75;
+      font-style: italic;
+    }
+
+    /* =============================================================
+       CTA SECTION
+    ============================================================= */
+    .cta-section {
+      padding: 7rem 0;
+      border-top: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cta-section::before {
+      content: '';
+      position: absolute;
+      bottom: -120px; right: -120px;
+      width: 700px; height: 700px;
+      background: radial-gradient(ellipse, rgba(200,144,42,.065) 0%, transparent 65%);
+    }
+
+    .cta-inner {
+      max-width: 680px;
+      margin: 0 auto;
+      text-align: center;
+      position: relative;
+      z-index: 2;
+    }
+
+    .cta-inner .section-title { margin: .7rem 0 1.4rem; }
+
+    .cta-inner > p {
+      font-size: .97rem;
+      color: var(--cream-dim);
+      line-height: 1.8;
+      margin-bottom: 2.5rem;
+    }
+
+    .cta-buttons {
+      display: flex;
+      gap: .85rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 3rem;
+    }
+
+    .cta-buttons .btn { padding: .7rem 1.8rem; font-size: .82rem; }
+
+    .contact-row {
+      display: flex;
+      justify-content: center;
+      gap: 3rem;
+      flex-wrap: wrap;
+    }
+
+    .contact-item { text-align: center; }
+
+    .ci-label {
+      font-family: var(--ff-cond);
+      font-size: .62rem;
+      font-weight: 700;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      color: var(--cream-dim);
+      margin-bottom: .25rem;
+    }
+
+    .ci-value {
+      font-family: var(--ff-cond);
+      font-size: .95rem;
+      font-weight: 700;
+      color: var(--gold-light);
+      transition: color .2s;
+    }
+
+    .ci-value:hover { color: var(--cream); }
+
+    /* =============================================================
+       FOOTER
+    ============================================================= */
+    .footer {
+      padding: 1.4rem 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .footer-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .footer-copy {
+      font-size: .74rem;
+      color: var(--cream-dim);
+    }
+
+    .footer-copy a { color: var(--gold); }
+    .footer-copy a:hover { color: var(--gold-light); }
+
+    .footer-certs {
+      display: flex;
+      gap: .6rem;
+      flex-wrap: wrap;
+    }
+
+    .cert-badge {
+      font-family: var(--ff-cond);
+      font-size: .62rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--cream-dim);
+      border: 1px solid var(--border);
+      padding: .2rem .55rem;
+      border-radius: 2px;
+    }
+
+    /* =============================================================
+       ANIMATIONS
+    ============================================================= */
+    @keyframes pop-in {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0);    }
+    }
+
+    @keyframes scroll-bounce {
+      0%, 100% { transform: rotate(45deg) translate(0,0); }
+      50%       { transform: rotate(45deg) translate(3px, 3px); }
+    }
+
+    @keyframes flash {
+      0%, 100% { opacity: 1; }
+      40%       { opacity: .55; }
+    }
+
+    .flash { animation: flash .35s ease; }
+
+    .hero-content { animation: pop-in .8s ease both; }
+
+    .scroll-hint {
+      position: absolute;
+      bottom: 2rem; left: 50%;
+      transform: translateX(-50%);
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: .45rem;
+      opacity: .38;
+    }
+
+    .scroll-hint span {
+      font-family: var(--ff-cond);
+      font-size: .62rem;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+    }
+
+    .scroll-arr {
+      width: 18px; height: 18px;
+      border-right: 1.5px solid var(--cream);
+      border-bottom: 1.5px solid var(--cream);
+      transform: rotate(45deg);
+      animation: scroll-bounce 1.8s infinite;
+    }
+
+    /* =============================================================
+       RESPONSIVE
+    ============================================================= */
+    @media (max-width: 1024px) {
+      .hero-inner,
+      .intro-grid,
+      .ops-layout { grid-template-columns: 1fr; gap: 3rem; }
+
+      .hero-card { max-width: 480px; }
+
+      .calc-layout { grid-template-columns: 1fr; }
+
+      .input-panel {
+        position: static;
+        max-height: none;
+      }
+
+      .services-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 680px) {
+      .services-grid { grid-template-columns: 1fr; }
+      .roi-tiers     { grid-template-columns: 1fr; }
+      .primary-metrics { grid-template-columns: 1fr; }
+      .annual-grid   { grid-template-columns: 1fr; gap: 1rem; }
+      .contact-row   { gap: 1.5rem; }
+      .insight-card  { padding: 2rem 1.75rem; }
+      .nav-right .btn-ghost { display: none; }
+      .hero-stats    { gap: 1.5rem; }
+      .hero-ctas     { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===================== NAV ===================== -->
+  <nav class="nav">
+    <div class="container">
+      <div class="nav-inner">
+        <a href="https://www.chimchimchureemasonry.com" class="nav-brand" target="_blank">
+          <span class="nav-name">Chim&#8209;Chim Churee</span>
+          <span class="nav-tagline">Chimney &amp; Masonry &mdash; Manassas, VA</span>
+        </a>
+        <div class="nav-right">
+          <a href="tel:7033304912" class="nav-phone">(703) 330-4912</a>
+          <a href="#contact" class="btn btn-ghost">Contact</a>
+          <a href="https://www.chimchimchureemasonry.com" class="btn btn-gold" target="_blank">Free Estimate</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ===================== HERO ===================== -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-inner">
+        <div class="hero-content">
+          <div class="hero-eyebrow-row">
+            <span class="eyebrow">Chim-Chim Churee Chimney &amp; Masonry</span>
+            <div class="hero-line"></div>
+          </div>
+          <h1>How Much Is Your<br>Chimney Business<br><em>Really</em> Leaking?</h1>
+          <p class="hero-sub">
+            Callbacks, missed calls, estimate writing, manual scheduling, paperwork &mdash; for a chimney company running real volume across Northern Virginia, these aren&rsquo;t minor inconveniences. They&rsquo;re a compounding drain on your time and revenue every single month.
+          </p>
+          <div class="hero-ctas">
+            <a href="#calculator" class="btn btn-gold">Run the Calculator</a>
+            <a href="tel:7033304912" class="btn btn-ghost">(703) 330-4912</a>
+          </div>
+          <div class="hero-stats">
+            <div class="hero-stat">
+              <div class="hero-stat-num">40+</div>
+              <div class="hero-stat-desc">Hours lost monthly<br>on average to admin &amp; ops</div>
+            </div>
+            <div class="hero-stat">
+              <div class="hero-stat-num">$650</div>
+              <div class="hero-stat-desc">Est. avg job value<br>across DMV chimney market</div>
+            </div>
+            <div class="hero-stat">
+              <div class="hero-stat-num">35%</div>
+              <div class="hero-stat-desc">Missed calls that<br>could close with follow-up</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Preview Card -->
+        <div>
+          <div class="hero-card">
+            <div class="hero-card-label">Live Results Preview &mdash; Adjust Below</div>
+            <div class="hero-card-stats">
+              <div class="hc-stat">
+                <span class="hc-label">Hours Lost / Month</span>
+                <span class="hc-value gold" id="hc-hours">0</span>
+              </div>
+              <div class="hc-stat">
+                <span class="hc-label">Owner Time Cost / Month</span>
+                <span class="hc-value white" id="hc-timecost">$0</span>
+              </div>
+              <div class="hc-stat">
+                <span class="hc-label">Recoverable Revenue / Month</span>
+                <span class="hc-value green" id="hc-recovered">$0</span>
+              </div>
+              <div class="hc-stat">
+                <span class="hc-label">Annual Combined Opportunity</span>
+                <span class="hc-value gold" id="hc-annual">$0</span>
+              </div>
+            </div>
+            <a href="#calculator" class="btn btn-gold hero-card-cta">Customize Your Numbers</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="scroll-hint">
+      <span>Scroll</span>
+      <div class="scroll-arr"></div>
+    </div>
+  </section>
+
+  <!-- ===================== INTRO ===================== -->
+  <section class="intro">
+    <div class="container">
+      <div class="intro-grid">
+        <div class="intro-text">
+          <span class="eyebrow">The Real Problem</span>
+          <h2 class="section-title">Your craft is solid.<br>Your operations may have leaks.</h2>
+          <p>Thomas, your team has built a real reputation in Northern Virginia &mdash; CSIA-certified, family-run, trusted across Manassas, the DC metro, and the Fredericksburg corridor. The technical side of this business is not the weak point.</p>
+          <p>The weak points are what happen around the work. Every missed call is a potential chimney cleaning that turns into a liner estimate. Every callback eats four hours a technician will not recover. Every week of manual scheduling is time that could be spent closing higher-ticket masonry and gas installation jobs.</p>
+          <p>This calculator makes those hidden costs visible &mdash; not as theory, but as real numbers based on how a chimney company at your volume actually runs.</p>
+          <div class="badges">
+            <span class="badge">CSIA Certified</span>
+            <span class="badge">Licensed &amp; Insured</span>
+            <span class="badge">Family Owned &amp; Operated</span>
+            <span class="badge">Free Estimates</span>
+            <span class="badge">Best Price Guarantee</span>
+            <span class="badge">Northern VA &amp; DC Metro</span>
+          </div>
+        </div>
+
+        <div>
+          <div class="benchmark-box">
+            <div class="benchmark-head">Industry Benchmarks Used in This Calculator</div>
+            <div class="benchmark-rows">
+              <div class="bench-row">
+                <span class="bench-label">Fireplace cleaning &amp; L1 inspection (known pricing)</span>
+                <span class="bench-val">$229&ndash;$319</span>
+              </div>
+              <div class="bench-row">
+                <span class="bench-label">Level 2 video inspection (known pricing)</span>
+                <span class="bench-val">$249&ndash;$319</span>
+              </div>
+              <div class="bench-row">
+                <span class="bench-label">Stainless liner install (market benchmark)</span>
+                <span class="bench-val">$1,800&ndash;$3,500</span>
+              </div>
+              <div class="bench-row">
+                <span class="bench-label">Masonry / tuckpointing (market benchmark)</span>
+                <span class="bench-val">$500&ndash;$3,000+</span>
+              </div>
+              <div class="bench-row">
+                <span class="bench-label">Gas line / appliance install (market benchmark)</span>
+                <span class="bench-val">$1,200&ndash;$4,500</span>
+              </div>
+              <div class="bench-row">
+                <span class="bench-label">Avg jobs per technician per day</span>
+                <span class="bench-val">3&ndash;5 jobs</span>
+              </div>
+              <div class="bench-row">
+                <span class="bench-label">Industry callback rate average</span>
+                <span class="bench-val">3&ndash;6%</span>
+              </div>
+              <div class="bench-row">
+                <span class="bench-label">Est. avg revenue per completed job (calculator default)</span>
+                <span class="bench-val">$650</span>
+              </div>
+            </div>
+            <div class="bench-note">Known pricing from Chim-Chim Churee booking data. All other figures are industry benchmarks and operational assumptions for calculator context only &mdash; not official pricing.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== CALCULATOR ===================== -->
+  <section class="calc-section" id="calculator">
+    <div class="container">
+      <div class="calc-head">
+        <span class="eyebrow">Interactive Calculator</span>
+        <h2 class="section-title">Time Leak &amp; Revenue Recovery</h2>
+        <p>Adjust any input below. Every result updates instantly.</p>
+      </div>
+
+      <div class="calc-layout">
+
+        <!-- INPUTS -->
+        <div class="input-panel">
+          <div class="input-panel-head">
+            <span class="panel-title">Your Business Inputs</span>
+            <button class="reset-btn" onclick="resetDefaults()">Reset Defaults</button>
+          </div>
+          <div class="input-scroll">
+
+            <div class="input-group">
+              <div class="ig-title">Business Baseline</div>
+              <div class="field">
+                <label class="field-label" for="avgRevenue">Average revenue per completed job ($)</label>
+                <input class="field-input" type="number" id="avgRevenue" value="650" min="0" step="25" oninput="calculate()">
+              </div>
+              <div class="field">
+                <label class="field-label" for="ownerRate">Your time value as owner / operator ($/hr)</label>
+                <input class="field-input" type="number" id="ownerRate" value="150" min="0" step="10" oninput="calculate()">
+              </div>
+            </div>
+
+            <div class="input-group">
+              <div class="ig-title">Field Disruptions &mdash; Per Month</div>
+              <div class="field">
+                <label class="field-label" for="callOuts">Employee call-outs &nbsp;<span style="opacity:.55;">(est. 3 hrs lost each)</span></label>
+                <input class="field-input" type="number" id="callOuts" value="3" min="0" step="1" oninput="calculate()">
+              </div>
+              <div class="field">
+                <label class="field-label" for="lateArrivals">Late arrivals / no-shows &nbsp;<span style="opacity:.55;">(est. 2 hrs lost each)</span></label>
+                <input class="field-input" type="number" id="lateArrivals" value="6" min="0" step="1" oninput="calculate()">
+              </div>
+              <div class="field">
+                <label class="field-label" for="callbacks">Callbacks / jobs requiring return visit &nbsp;<span style="opacity:.55;">(est. 4 hrs lost each)</span></label>
+                <input class="field-input" type="number" id="callbacks" value="4" min="0" step="1" oninput="calculate()">
+              </div>
+              <div class="field">
+                <label class="field-label" for="trucks">Truck breakdowns / major route disruptions &nbsp;<span style="opacity:.55;">(est. 4 hrs lost each)</span></label>
+                <input class="field-input" type="number" id="trucks" value="1" min="0" step="1" oninput="calculate()">
+              </div>
+            </div>
+
+            <div class="input-group">
+              <div class="ig-title">People &amp; Training &mdash; Per Month</div>
+              <div class="field">
+                <label class="field-label" for="training">New hire training hours invested</label>
+                <input class="field-input" type="number" id="training" value="10" min="0" step="1" oninput="calculate()">
+              </div>
+              <div class="field">
+                <label class="field-label" for="quits">Sudden quit events &nbsp;<span style="opacity:.55;">(est. 6+ hrs lost minimum each)</span></label>
+                <input class="field-input" type="number" id="quits" value="0.5" min="0" step="0.5" oninput="calculate()">
+              </div>
+            </div>
+
+            <div class="input-group">
+              <div class="ig-title">Customer Issues &mdash; Per Month</div>
+              <div class="field">
+                <label class="field-label" for="angryCustomers">Angry customer calls / disputes &nbsp;<span style="opacity:.55;">(est. 2 hrs lost each)</span></label>
+                <input class="field-input" type="number" id="angryCustomers" value="4" min="0" step="1" oninput="calculate()">
+              </div>
+              <div class="field">
+                <label class="field-label" for="majorIssues">Major complaints / on-site resolution issues &nbsp;<span style="opacity:.55;">(est. 4 hrs lost each)</span></label>
+                <input class="field-input" type="number" id="majorIssues" value="2" min="0" step="1" oninput="calculate()">
+              </div>
+              <div class="field">
+                <label class="field-label" for="badReviews">Bad reviews requiring a written response &nbsp;<span style="opacity:.55;">(est. 2 hrs lost each)</span></label>
+                <input class="field-input" type="number" id="badReviews" value="1" min="0" step="1" oninput="calculate()">
+              </div>
+            </div>
+
+            <div class="input-group">
+              <div class="ig-title">Admin Burden &mdash; Per Week</div>
+              <div class="field">
+                <label class="field-label" for="estimateHrs">Hours writing estimates per week</label>
+                <input class="field-input" type="number" id="estimateHrs" value="8" min="0" step="0.5" oninput="calculate()">
+              </div>
+              <div class="field">
+                <label class="field-label" for="schedulingHrs">Hours on scheduling &amp; dispatch per week</label>
+                <input class="field-input" type="number" id="schedulingHrs" value="5" min="0" step="0.5" oninput="calculate()">
+              </div>
+              <div class="field">
+                <label class="field-label" for="paperworkHrs">Hours on paperwork &amp; invoicing per week</label>
+                <input class="field-input" type="number" id="paperworkHrs" value="6" min="0" step="0.5" oninput="calculate()">
+              </div>
+            </div>
+
+            <div class="input-group">
+              <div class="ig-title">Missed Revenue &mdash; Per Month</div>
+              <div class="field">
+                <label class="field-label" for="missedCalls">Missed or unreturned calls per month</label>
+                <input class="field-input" type="number" id="missedCalls" value="20" min="0" step="1" oninput="calculate()">
+              </div>
+              <div class="field">
+                <label class="field-label" for="closeRate">Estimated close rate if those calls were followed up (0.0&ndash;1.0)</label>
+                <input class="field-input" type="number" id="closeRate" value="0.35" min="0" max="1" step="0.05" oninput="calculate()">
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- RESULTS -->
+        <div class="results-panel">
+
+          <div class="primary-metrics">
+            <div class="metric-card mc-gold">
+              <div class="mc-label">Hours Lost / Month</div>
+              <div class="mc-value" id="r-hours">0</div>
+              <div class="mc-sub">Preventable operational drag</div>
+            </div>
+            <div class="metric-card mc-dark">
+              <div class="mc-label">Owner Time Cost / Month</div>
+              <div class="mc-value" id="r-timecost">$0</div>
+              <div class="mc-sub">At your declared hourly rate</div>
+            </div>
+            <div class="metric-card mc-green">
+              <div class="mc-label">Recoverable Revenue / Month</div>
+              <div class="mc-value" id="r-recovered">$0</div>
+              <div class="mc-sub">From missed call recovery</div>
+            </div>
+            <div class="metric-card mc-dark">
+              <div class="mc-label">Net Monthly Opportunity</div>
+              <div class="mc-value" style="color:var(--gold)" id="r-net">$0</div>
+              <div class="mc-sub">After $997/mo investment benchmark</div>
+            </div>
+          </div>
+
+          <div class="annual-panel">
+            <div class="panel-section-title">Annual View</div>
+            <div class="annual-grid">
+              <div>
+                <div class="ag-label">Annual Time Cost</div>
+                <div class="ag-value white" id="r-annTimecost">$0</div>
+              </div>
+              <div>
+                <div class="ag-label">Recovered Rev / Year</div>
+                <div class="ag-value green" id="r-annRecovered">$0</div>
+              </div>
+              <div>
+                <div class="ag-label">ROI at $997/mo</div>
+                <div class="ag-value gold" id="r-roi">0.0x</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="breakdown-panel">
+            <div class="panel-section-title">
+              Where the Hours Go &nbsp;<span style="opacity:.5;font-size:.65rem;">&mdash; GOLD = operations disruption &nbsp; GREEN = admin burden</span>
+            </div>
+            <div id="breakdown-container"></div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== INSIGHT ===================== -->
+  <section class="insight-section">
+    <div class="container">
+      <div class="insight-card">
+        <div class="insight-header">
+          <div>
+            <span class="eyebrow">What This Means</span>
+            <h2 class="section-title" style="margin-top:.65rem;">The Numbers Tell a Clear Story</h2>
+          </div>
+        </div>
+        <p class="insight-text">
+          Based on your inputs, this business may be losing approximately <strong id="ins-hours">0</strong> hours per month to preventable admin work, operational chaos, callbacks, and missed opportunities. At an owner time value of <strong id="ins-rate">$0</strong>/hr, that translates to roughly <strong id="ins-timecost">$0</strong> in monthly time cost &mdash; before counting a single dollar of missed-call revenue. If <strong id="ins-rcalls">0</strong> missed calls per month were recovered at a conservative close rate, that adds another <strong id="ins-rrev">$0</strong> in potential monthly revenue. Combined, the monthly opportunity is approximately <strong id="ins-combined">$0</strong>. On an annualized basis, that is <strong id="ins-annual">$0</strong> in time cost plus recoverable revenue sitting on the table every year.
+        </p>
+
+        <div class="roi-tiers">
+          <div class="roi-tier">
+            <div class="tier-price">$497</div>
+            <div class="tier-per">per month</div>
+            <div class="tier-roi" id="roi-497">0.0x</div>
+            <div class="tier-roi-label">ROI Multiple</div>
+          </div>
+          <div class="roi-tier featured">
+            <div class="tier-tag">Benchmark</div>
+            <div class="tier-price">$997</div>
+            <div class="tier-per">per month</div>
+            <div class="tier-roi" id="roi-997">0.0x</div>
+            <div class="tier-roi-label">ROI Multiple</div>
+          </div>
+          <div class="roi-tier">
+            <div class="tier-price">$1,997</div>
+            <div class="tier-per">per month</div>
+            <div class="tier-roi" id="roi-1997">0.0x</div>
+            <div class="tier-roi-label">ROI Multiple</div>
+          </div>
+        </div>
+        <p style="font-size:.72rem;color:var(--cream-dim);font-style:italic;margin-top:1rem;">
+          ROI multiples compare the estimated annual combined opportunity (time cost + recoverable revenue) against each monthly investment tier annualized. These are directional estimates based on your inputs, not guarantees of outcome.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== OPERATIONS ===================== -->
+  <section class="operations-section">
+    <div class="container">
+      <div class="ops-header">
+        <span class="eyebrow">Built for This Industry</span>
+        <h2 class="section-title">Built for Real-World<br>Chimney Operations</h2>
+        <p>This is not a generic contractor calculator. The inputs and assumptions reflect how a CSIA-certified chimney and masonry company actually operates &mdash; not how a landscaper or plumber does.</p>
+      </div>
+
+      <div class="ops-layout">
+        <div class="ops-left">
+          <h3>Your work is highly specialized. Your operational pressure reflects that.</h3>
+          <p>Running a chimney and masonry company means managing a technically demanding, seasonal, inspection-driven business where a $99 Level 1 call can uncover a $3,000 liner job &mdash; if you have the systems to follow it through.</p>
+          <p>The complexity stacks up fast: technician certifications, camera inspection reports, brick and mortar matching, gas line coordination, crown and chase cover assessment, prefab versus masonry decisions. Every stage of a chimney job involves handoffs, communication, and documentation that manual processes strain to keep up with.</p>
+          <p>The inputs in this calculator are calibrated to a chimney company running serious volume across Northern Virginia &mdash; not a one-truck handyman operation.</p>
+        </div>
+
+        <div class="ops-items">
+          <div class="ops-item">
+            <div class="ops-icon">&#128247;</div>
+            <div class="ops-body">
+              <h4>Level 2 Video Inspections</h4>
+              <p>Camera work takes time and generates detailed reports. Poor scheduling follow-up on a $249&ndash;$319 inspection can delay a $2,000+ liner or parging job waiting behind it.</p>
+            </div>
+          </div>
+          <div class="ops-item">
+            <div class="ops-icon">&#9941;</div>
+            <div class="ops-body">
+              <h4>Masonry Repair Estimates</h4>
+              <p>Tuckpointing, repointing, and partial rebuilds require on-site assessment, brick matching, and written proposals. Among the highest time-per-estimate tasks in your service mix.</p>
+            </div>
+          </div>
+          <div class="ops-item">
+            <div class="ops-icon">&#128293;</div>
+            <div class="ops-body">
+              <h4>Gas Line &amp; Appliance Installs</h4>
+              <p>High-ticket work involving inspector and gas company coordination. Admin drag on free estimate follow-up regularly delays your highest-margin jobs.</p>
+            </div>
+          </div>
+          <div class="ops-item">
+            <div class="ops-icon">&#128200;</div>
+            <div class="ops-body">
+              <h4>Seasonal Demand Surges</h4>
+              <p>Fall season in Northern Virginia drives a concentrated burst of inspection and cleaning demand. Scheduling bottlenecks during peak weeks can mean turning away work that will not come back.</p>
+            </div>
+          </div>
+          <div class="ops-item">
+            <div class="ops-icon">&#128101;</div>
+            <div class="ops-body">
+              <h4>Technician Training Burden</h4>
+              <p>CSIA-level knowledge takes real time to develop. New technician onboarding is a sustained operational cost &mdash; and it compounds during periods of turnover.</p>
+            </div>
+          </div>
+          <div class="ops-item">
+            <div class="ops-icon">&#128205;</div>
+            <div class="ops-body">
+              <h4>Route Planning &amp; Dispatch</h4>
+              <p>Manassas to Fredericksburg is not a short run. Unoptimized routing across your service area means trucks spend time in transit rather than generating billable revenue.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== SERVICES ===================== -->
+  <section class="services-section">
+    <div class="container">
+      <span class="eyebrow">Service Economics</span>
+      <h2 class="section-title">Common Chimney Services<br>and What They Typically Lead To</h2>
+      <p>Small visits become large jobs &mdash; if the follow-up system is there to capture them.</p>
+
+      <div class="services-grid">
+        <div class="svc-card">
+          <div class="svc-type">Entry Service</div>
+          <h4>Level 1 Visual Inspection &mdash; $99</h4>
+          <p>A full visual walkthrough of everything accessible. Digital photos and inspection report included. Priced to get you in the door and start the diagnostic conversation.</p>
+          <div class="svc-leads">Often surfaces: damper wear, cap or crown damage, mortar deterioration, or the need for a Level 2 camera inspection.</div>
+        </div>
+        <div class="svc-card">
+          <div class="svc-type">Diagnostic</div>
+          <h4>Level 2 Video Inspection &mdash; $249&ndash;$319</h4>
+          <p>Camera-based inspection that reveals what a visual pass cannot. Liner damage, cracks, blockages, hidden water intrusion paths &mdash; the problems that become expensive when missed.</p>
+          <div class="svc-leads">Commonly leads to: liner installs ($1,800&ndash;$3,500), smoke chamber parging, or partial rebuild estimates.</div>
+        </div>
+        <div class="svc-card">
+          <div class="svc-type">Routine Maintenance</div>
+          <h4>Fireplace Cleaning &amp; Inspection &mdash; $229&ndash;$319</h4>
+          <p>Seasonal service that keeps the customer relationship active year after year and surfaces repair needs before they become emergencies.</p>
+          <div class="svc-leads">Frequently uncovers: chase cover deterioration, cap replacements, tuckpointing needs, damper issues.</div>
+        </div>
+        <div class="svc-card">
+          <div class="svc-type">High Ticket</div>
+          <h4>Stainless Steel Liner Installation</h4>
+          <p>One of the higher-ticket repair categories in your service mix. Almost always diagnosed through inspection first. Estimate-to-close requires a clean follow-up process to avoid losing jobs to competitors.</p>
+          <div class="svc-leads">Market benchmark: $1,800&ndash;$3,500 depending on flue length and configuration.</div>
+        </div>
+        <div class="svc-card">
+          <div class="svc-type">High Ticket</div>
+          <h4>Gas Line &amp; Appliance Installation</h4>
+          <p>Propane and natural gas conversions, gas fireplace installs, log set upgrades &mdash; free estimate category with among the highest average job values in your mix.</p>
+          <div class="svc-leads">Spring Special active: $500 off any gas line or appliance install through 03/31/26.</div>
+          <div class="promo-tag">Active Promo</div>
+        </div>
+        <div class="svc-card">
+          <div class="svc-type">Masonry</div>
+          <h4>Tuckpointing &amp; Masonry Repair</h4>
+          <p>Precision brick and mortar matching is a core differentiator for Chim-Chim Churee. These jobs require thorough on-site assessment and written proposals &mdash; time-intensive, but high-value and high-trust work.</p>
+          <div class="svc-leads">Scope range: a few hundred for minor repointing to several thousand for partial rebuilds or extensive restoration.</div>
+        </div>
+      </div>
+
+      <div class="insight-box">
+        <p>
+          An inspection that never gets booked, or a callback that consumes four hours of a technician&rsquo;s day, does not just cost that one appointment. It delays the estimate for a liner, a gas conversion, or a masonry rebuild &mdash; the jobs that actually move your revenue numbers. The operational drag is not just a direct cost. It is the compounding effect of deferred higher-value work.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== CTA ===================== -->
+  <section class="cta-section" id="contact">
+    <div class="container">
+      <div class="cta-inner">
+        <span class="eyebrow">Ready to Talk</span>
+        <h2 class="section-title">Start with a<br>Free Estimate.</h2>
+        <p>
+          Chim-Chim Churee Chimney &amp; Masonry has served Northern Virginia, the DC metro, and the Fredericksburg corridor for years. CSIA-certified, licensed, insured, and backed by a Best Price Guarantee. When you are ready to talk about what better operations could look like, the conversation starts here.
+        </p>
+        <div class="cta-buttons">
+          <a href="https://www.chimchimchureemasonry.com" class="btn btn-gold" target="_blank">Book a Free Estimate</a>
+          <a href="tel:7033304912" class="btn btn-ghost">Call (703) 330-4912</a>
+        </div>
+        <div class="contact-row">
+          <div class="contact-item">
+            <div class="ci-label">Phone</div>
+            <a href="tel:7033304912" class="ci-value">(703) 330-4912</a>
+          </div>
+          <div class="contact-item">
+            <div class="ci-label">Email</div>
+            <a href="mailto:info@chimchimchureemasonry.com" class="ci-value">info@chimchimchureemasonry.com</a>
+          </div>
+          <div class="contact-item">
+            <div class="ci-label">Office</div>
+            <span class="ci-value" style="cursor:default;">9107 Industry Dr STE F, Manassas Park, VA 20111</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== FOOTER ===================== -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-copy">
+          &copy; 2025 <a href="https://www.chimchimchureemasonry.com" target="_blank">Chim-Chim Churee Chimney &amp; Masonry</a>. All rights reserved.
+          Calculator figures are operational estimates and industry benchmarks for planning purposes only.
+        </div>
+        <div class="footer-certs">
+          <span class="cert-badge">CSIA Certified</span>
+          <span class="cert-badge">Licensed &amp; Insured</span>
+          <span class="cert-badge">Manassas Park, VA</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ===================== CALCULATOR LOGIC ===================== -->
+  <script>
+    /*
+     * TIME LEAK & REVENUE RECOVERY CALCULATOR
+     * Chim-Chim Churee Chimney & Masonry
+     * ─────────────────────────────────────────────────────────────
+     * FORMULA NOTES:
+     *   • Each event type × a fixed hour-multiplier = hours lost
+     *   • Admin burden: weekly hrs × 4.33 = monthly hrs
+     *   • Total hours × owner rate = monthly time cost
+     *   • Recovered calls = missed calls × close rate
+     *   • Recovered rev = recovered calls × avg job value
+     *   • Combined = time cost + recovered rev
+     *   • ROI = combined annual / (tier × 12)
+     *
+     * DEFAULTS calibrated to ~$2.5M annual chimney company
+     * ─────────────────────────────────────────────────────────────
+     */
+
+    const DEFAULTS = {
+      avgRevenue:     650,
+      ownerRate:      150,
+      callOuts:       3,
+      lateArrivals:   6,
+      callbacks:      4,
+      trucks:         1,
+      training:       10,
+      quits:          0.5,
+      angryCustomers: 4,
+      majorIssues:    2,
+      badReviews:     1,
+      estimateHrs:    8,
+      schedulingHrs:  5,
+      paperworkHrs:   6,
+      missedCalls:    20,
+      closeRate:      0.35,
+    };
+
+    const WK2MO = 4.33; // weeks per month average
+
+    function g(id)  { const v = parseFloat(document.getElementById(id)?.value); return isFinite(v) ? v : 0; }
+
+    function $$(n)  {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency', currency: 'USD', maximumFractionDigits: 0
+      }).format(n || 0);
+    }
+
+    function fNum(n, d = 1) {
+      return new Intl.NumberFormat('en-US', { maximumFractionDigits: d }).format(n || 0);
+    }
+
+    function setEl(id, val) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (el.textContent !== String(val)) {
+        el.textContent = val;
+        el.classList.remove('flash');
+        void el.offsetWidth;
+        el.classList.add('flash');
+      }
+    }
+
+    function calculate() {
+      const avgRev   = g('avgRevenue');
+      const rate     = g('ownerRate');
+      const callouts = g('callOuts');
+      const late     = g('lateArrivals');
+      const cbacks   = g('callbacks');
+      const trucks   = g('trucks');
+      const training = g('training');
+      const quits    = g('quits');
+      const angry    = g('angryCustomers');
+      const major    = g('majorIssues');
+      const reviews  = g('badReviews');
+      const estHrs   = g('estimateHrs');
+      const schedHrs = g('schedulingHrs');
+      const paperHrs = g('paperworkHrs');
+      const missed   = g('missedCalls');
+      const close    = g('closeRate');
+
+      /* ─── Hour losses by category ─── */
+      const cats = [
+        { label: 'Employee Call-Outs',     hrs: callouts * 3,          admin: false },
+        { label: 'Late Arrivals',           hrs: late * 2,              admin: false },
+        { label: 'Callbacks / Return Visits',hrs: cbacks * 4,           admin: false },
+        { label: 'Truck Breakdowns',        hrs: trucks * 4,            admin: false },
+        { label: 'Technician Training',     hrs: training,              admin: false },
+        { label: 'Sudden Quits',            hrs: quits * 6,             admin: false },
+        { label: 'Angry Customer Issues',   hrs: angry * 2,             admin: false },
+        { label: 'Major Complaints',        hrs: major * 4,             admin: false },
+        { label: 'Review Cleanup',          hrs: reviews * 2,           admin: false },
+        { label: 'Estimate Writing',        hrs: estHrs * WK2MO,        admin: true  },
+        { label: 'Scheduling / Dispatch',   hrs: schedHrs * WK2MO,      admin: true  },
+        { label: 'Paperwork / Invoicing',   hrs: paperHrs * WK2MO,      admin: true  },
+      ];
+
+      const totalHrs   = cats.reduce((s, c) => s + c.hrs, 0);
+      const timeCostMo = totalHrs * rate;
+
+      const rcalls     = missed * close;
+      const rrevMo     = rcalls * avgRev;
+
+      const combinedMo = timeCostMo + rrevMo;
+      const timeCostYr = timeCostMo * 12;
+      const rrevYr     = rrevMo * 12;
+      const combinedYr = combinedMo * 12;
+
+      const netMo      = combinedMo - 997;
+
+      const roi497     = combinedYr / (497  * 12);
+      const roi997     = combinedYr / (997  * 12);
+      const roi1997    = combinedYr / (1997 * 12);
+
+      /* ─── Update result cards ─── */
+      setEl('r-hours',       fNum(totalHrs));
+      setEl('r-timecost',    $$(timeCostMo));
+      setEl('r-recovered',   $$(rrevMo));
+      setEl('r-net',         $$(netMo));
+      setEl('r-annTimecost', $$(timeCostYr));
+      setEl('r-annRecovered',$$(rrevYr));
+      setEl('r-roi',         fNum(roi997) + 'x');
+
+      /* ─── Hero card ─── */
+      setEl('hc-hours',     fNum(totalHrs));
+      setEl('hc-timecost',  $$(timeCostMo));
+      setEl('hc-recovered', $$(rrevMo));
+      setEl('hc-annual',    $$(combinedYr));
+
+      /* ─── ROI tiers ─── */
+      setEl('roi-497',  fNum(roi497)  + 'x');
+      setEl('roi-997',  fNum(roi997)  + 'x');
+      setEl('roi-1997', fNum(roi1997) + 'x');
+
+      /* ─── Insight paragraph ─── */
+      setEl('ins-hours',    fNum(totalHrs));
+      setEl('ins-rate',     $$(rate));
+      setEl('ins-timecost', $$(timeCostMo));
+      setEl('ins-rcalls',   fNum(rcalls, 1));
+      setEl('ins-rrev',     $$(rrevMo));
+      setEl('ins-combined', $$(combinedMo));
+      setEl('ins-annual',   $$(combinedYr));
+
+      /* ─── Breakdown bars ─── */
+      renderBreakdown(cats, totalHrs);
+    }
+
+    function renderBreakdown(cats, total) {
+      const sorted = [...cats].sort((a, b) => b.hrs - a.hrs);
+      const max    = Math.max(...cats.map(c => c.hrs), 1);
+      const el     = document.getElementById('breakdown-container');
+
+      el.innerHTML = sorted.map(c => {
+        const pct = Math.min((c.hrs / max) * 100, 100).toFixed(1);
+        return `
+          <div class="breakdown-row">
+            <div class="br-meta">
+              <span class="br-name">${c.label}</span>
+              <span class="br-hrs">${fNum(c.hrs)} hrs</span>
+            </div>
+            <div class="br-track">
+              <div class="br-fill${c.admin ? ' admin' : ''}" style="width:${pct}%"></div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    function resetDefaults() {
+      Object.entries(DEFAULTS).forEach(([k, v]) => {
+        const el = document.getElementById(k);
+        if (el) el.value = v;
+      });
+      calculate();
+    }
+
+    /* Smooth scroll for in-page anchors */
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', e => {
+        const t = document.querySelector(a.getAttribute('href'));
+        if (t) { e.preventDefault(); t.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+      });
+    });
+
+    /* Run on load */
+    calculate();
+  </script>
+</body>
+</html>
